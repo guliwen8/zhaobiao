@@ -1,0 +1,1960 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>企业投标管理系统</title>
+<style>
+:root {
+  --ink: #1a1a2e; --ink2: #16213e; --gold: #c9a84c; --gold-light: #e8c97e;
+  --red: #c0392b; --surface: #f7f3ec; --surface2: #ede8df;
+  --border: rgba(201,168,76,0.25); --text: #2c2c3a; --text2: #5a5a6a; --success: #27ae60;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; background: var(--surface); color: var(--text); min-height: 100vh; }
+.topbar { background: var(--ink); border-bottom: 2px solid var(--gold); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 60px; position: sticky; top: 0; z-index: 100; }
+.logo { font-family: Georgia, "Songti SC", serif; font-size: 1.1rem; font-weight: 700; color: var(--gold); letter-spacing: 2px; display: flex; align-items: center; gap: 10px; }
+.topbar-meta { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.72rem; color: rgba(255,255,255,0.45); }
+.layout { display: flex; min-height: calc(100vh - 60px); }
+.sidebar { width: 200px; flex-shrink: 0; background: var(--ink2); padding: 1.5rem 0; border-right: 1px solid rgba(201,168,76,0.2); }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 0.75rem 1.5rem; color: rgba(255,255,255,0.55); cursor: pointer; font-size: 0.88rem; transition: all 0.2s; border-left: 3px solid transparent; }
+.nav-item:hover { color: #fff; background: rgba(255,255,255,0.05); }
+.nav-item.active { color: var(--gold); border-left-color: var(--gold); background: rgba(201,168,76,0.08); }
+.nav-badge { margin-left: auto; background: var(--red); color: #fff; font-size: 0.65rem; padding: 1px 6px; border-radius: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.main { flex: 1; padding: 2rem; overflow: hidden; }
+.stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; margin-bottom: 2rem; }
+.stat-card { background: #fff; border: 1px solid var(--border); border-top: 3px solid var(--gold); padding: 1.2rem 1rem; border-radius: 2px; }
+.stat-card.clickable { cursor: pointer; transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s; }
+.stat-card.clickable:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(26,26,46,0.08); border-color: rgba(201,168,76,0.55); }
+.stat-card.active { background: rgba(201,168,76,0.08); border-color: rgba(201,168,76,0.7); }
+.stat-label { font-size: 0.72rem; color: var(--text2); letter-spacing: 1px; margin-bottom: 0.4rem; }
+.stat-value { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 1.8rem; font-weight: 500; color: var(--ink); }
+.stat-value.highlight { color: var(--red); }
+.panel { background: #fff; border: 1px solid var(--border); border-radius: 2px; overflow: hidden; }
+.panel-header { background: var(--ink); padding: 0.9rem 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; }
+.panel-actions { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.panel-title { font-family: Georgia, "Songti SC", serif; color: var(--gold); font-size: 0.9rem; letter-spacing: 2px; }
+.panel-body { padding: 1.5rem; }
+.btn { padding: 0.5rem 1.2rem; border: none; border-radius: 2px; font-family: inherit; font-size: 0.82rem; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-gold { background: var(--gold); color: var(--ink); font-weight: 500; }
+.btn-gold:hover { background: var(--gold-light); }
+.btn-outline { background: transparent; color: var(--gold); border: 1px solid var(--gold); }
+.btn-outline:hover { background: rgba(201,168,76,0.1); }
+.btn-danger { background: var(--red); color: #fff; }
+.btn-danger:hover { background: #a93226; }
+.btn-sm { padding: 0.3rem 0.8rem; font-size: 0.75rem; }
+.btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--surface2); }
+.btn-ghost:hover { background: var(--surface2); }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+thead { background: var(--surface2); }
+th { padding: 0.8rem 1rem; text-align: left; font-weight: 500; font-size: 0.75rem; color: var(--text2); letter-spacing: 1px; border-bottom: 2px solid var(--border); }
+td { padding: 0.8rem 1rem; border-bottom: 1px solid var(--surface2); vertical-align: middle; }
+tr:hover td { background: rgba(201,168,76,0.03); }
+.td-title { max-width: 420px; }
+.td-title a { color: var(--text); text-decoration: none; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.5; }
+.td-title a:hover { color: var(--gold); }
+.tag-new { display: inline-block; background: var(--red); color: #fff; font-size: 0.6rem; padding: 1px 5px; border-radius: 2px; margin-right: 6px; vertical-align: middle; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.78rem; color: var(--text2); }
+.form-group { margin-bottom: 1rem; }
+.form-label { font-size: 0.8rem; color: var(--text2); margin-bottom: 0.4rem; display: block; }
+.form-input, .form-select, .form-textarea { width: 100%; padding: 0.6rem 0.8rem; border: 1px solid var(--border); border-radius: 2px; font-size: 0.85rem; font-family: inherit; background: var(--surface); color: var(--text); transition: border-color 0.2s; }
+.form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: var(--gold); }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: #fff; width: 620px; max-width: 95vw; border-top: 3px solid var(--gold); border-radius: 2px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+.modal-header { background: var(--ink); padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+.modal-title { font-family: Georgia, "Songti SC", serif; color: var(--gold); font-size: 0.9rem; }
+.modal-close { background: none; border: none; color: rgba(255,255,255,0.5); font-size: 1.2rem; cursor: pointer; }
+.modal-body { padding: 1.5rem; max-height: 80vh; overflow-y: auto; }
+.modal-footer { padding: 1rem 1.5rem; background: var(--surface); display: flex; justify-content: flex-end; gap: 0.8rem; }
+.search-wrap { position: relative; flex: 1; min-width: 180px; }
+.search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text2); }
+.search-input { padding-left: 2.2rem !important; }
+.pagination { display: flex; justify-content: flex-end; align-items: center; gap: 0.5rem; margin-top: 1.2rem; }
+.page-info { color: var(--text2); margin-right: auto; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.75rem; }
+.page-btn { width: 32px; height: 32px; border: 1px solid var(--border); background: #fff; cursor: pointer; border-radius: 2px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.page-btn:hover { background: var(--surface2); }
+.page-btn.active { background: var(--gold); border-color: var(--gold); color: var(--ink); font-weight: 600; }
+.page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+.status-on { background: var(--success); } .status-off { background: #ccc; }
+.kw-tag { background: var(--ink); color: var(--gold); padding: 0.3rem 0.8rem; border-radius: 2px; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 6px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; margin: 3px; }
+.kw-remove { cursor: pointer; color: rgba(255,255,255,0.4); border: none; background: none; }
+.kw-remove:hover { color: var(--red); }
+.empty-state { text-align: center; padding: 3rem; color: var(--text2); }
+.empty-icon { font-size: 2.5rem; margin-bottom: 0.8rem; }
+.toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--ink); color: var(--gold); border-left: 3px solid var(--gold); padding: 0.8rem 1.2rem; font-size: 0.85rem; border-radius: 2px; z-index: 999; box-shadow: 0 4px 20px rgba(0,0,0,0.3); transform: translateY(100px); opacity: 0; transition: all 0.3s; pointer-events: none; max-width: 360px; }
+.toast.show { transform: translateY(0); opacity: 1; }
+.loading { text-align: center; padding: 2rem; color: var(--text2); }
+.spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.hint-text { font-size: 0.75rem; color: var(--text2); margin-top: 0.4rem; line-height: 1.5; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+.filter-bar { display: flex; gap: 0.8rem; align-items: center; margin-bottom: 0.8rem; flex-wrap: wrap; }
+.bid-filter-board { display: grid; grid-template-columns: minmax(260px, 1.2fr) repeat(3, minmax(140px, 0.7fr)) auto; gap: 0.75rem; align-items: center; margin-bottom: 0.85rem; }
+.bid-filter-board .btn { justify-content: center; }
+.bid-range { display: flex; gap: 0.45rem; align-items: center; flex-wrap: wrap; margin-bottom: 0.85rem; }
+.bid-chip-row { margin-bottom: 0.9rem; padding: 0.65rem 0.8rem; background: rgba(201,168,76,0.06); border-left: 3px solid var(--gold); display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; font-size: 0.78rem; }
+.bid-chip { border: 1px solid var(--border); background: #fff; color: var(--text); padding: 0.34rem 0.72rem; border-radius: 2px; cursor: pointer; font-size: 0.76rem; }
+.bid-chip.active { background: var(--ink); color: var(--gold); border-color: var(--ink); }
+.bid-chip:disabled { opacity: 0.55; cursor: not-allowed; }
+.bid-scope { margin-bottom: 0.85rem; display: flex; gap: 0.45rem; align-items: center; flex-wrap: wrap; color: var(--text2); font-size: 0.78rem; }
+.bid-scope strong { color: var(--text); }
+.kw-hint { margin-bottom: 0.8rem; padding: 0.5rem 0.8rem; background: rgba(201,168,76,0.06); border-left: 3px solid var(--gold); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 0.75rem; }
+.note-box, .preview-box { margin-top: 1rem; padding: 0.85rem 1rem; background: rgba(201,168,76,0.06); border-left: 3px solid var(--gold); font-size: 0.8rem; line-height: 1.7; }
+.preview-box { border-left-color: var(--success); background: rgba(39,174,96,0.06); }
+.preview-list { margin-top: 0.6rem; display: grid; gap: 0.45rem; }
+.preview-item { padding: 0.65rem 0.75rem; background: #fff; border: 1px solid rgba(39,174,96,0.18); }
+.muted { color: var(--text2); font-size: 0.78rem; }
+.badge { display: inline-flex; align-items: center; min-height: 22px; padding: 2px 8px; border-radius: 2px; font-size: 0.72rem; line-height: 1.2; background: var(--surface2); color: var(--text2); white-space: nowrap; }
+.badge-high { background: rgba(192,57,43,0.1); color: var(--red); }
+.badge-mid { background: rgba(201,168,76,0.16); color: #8a6a16; }
+.badge-low { background: rgba(39,174,96,0.1); color: var(--success); }
+.progressbar { height: 7px; width: 100%; background: var(--surface2); border-radius: 999px; overflow: hidden; }
+.progressbar span { display: block; height: 100%; background: var(--gold); }
+.kanban-grid { display: grid; grid-template-columns: repeat(4, minmax(180px, 1fr)); gap: 1rem; align-items: start; }
+.kanban-col { background: var(--surface); border: 1px solid var(--border); border-radius: 2px; min-height: 160px; }
+.kanban-head { padding: 0.75rem 0.85rem; border-bottom: 1px solid var(--border); font-size: 0.78rem; color: var(--text2); display: flex; justify-content: space-between; align-items: center; }
+.task-card { margin: 0.75rem; padding: 0.75rem; background: #fff; border: 1px solid var(--surface2); border-left: 3px solid var(--gold); border-radius: 2px; }
+.task-card.overdue { border-left-color: var(--red); }
+.task-title { font-weight: 600; line-height: 1.5; margin-bottom: 0.45rem; }
+.textarea-lg { min-height: 120px; resize: vertical; line-height: 1.65; }
+.profile-grid { display: grid; grid-template-columns: minmax(280px, 0.85fr) minmax(340px, 1.15fr); gap: 1.2rem; align-items: start; }
+.template-list { display: grid; gap: 0.8rem; }
+.template-item { padding: 0.85rem; background: #fff; border: 1px solid var(--surface2); border-left: 3px solid var(--gold); }
+@media (max-width: 1100px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .two-col { grid-template-columns: 1fr; }
+  .kanban-grid { grid-template-columns: repeat(2, minmax(180px, 1fr)); }
+  .profile-grid { grid-template-columns: 1fr; }
+  .bid-filter-board { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 820px) {
+  .layout { flex-direction: column; }
+  .sidebar { width: 100%; display: flex; overflow-x: auto; padding: 0.5rem 0; }
+  .nav-item { border-left: none; border-bottom: 3px solid transparent; white-space: nowrap; }
+  .nav-item.active { border-bottom-color: var(--gold); }
+  .main { padding: 1rem; }
+  .stats-grid, .form-row { grid-template-columns: 1fr; }
+  .panel-header { align-items: flex-start; flex-direction: column; }
+  .kanban-grid { grid-template-columns: 1fr; }
+  .bid-filter-board { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="logo"><span>⚖</span>企业投标管理系统</div>
+  <div style="display:flex;align-items:center;gap:1rem">
+    <span class="topbar-meta" id="topbar-time"></span>
+    <span class="topbar-meta" id="topbar-user" style="display:none"></span>
+    <button id="logout-btn" class="btn btn-ghost btn-sm" style="display:none;color:rgba(255,255,255,0.5);font-size:0.72rem;border-color:rgba(255,255,255,0.15)" onclick="doLogout()">退出</button>
+  </div>
+</div>
+<div class="layout">
+  <div class="sidebar">
+    <div class="nav-item active" onclick="switchTab('bids')" id="nav-bids">
+      📋 招标公告 <span class="nav-badge" id="new-badge" style="display:none"></span>
+    </div>
+    <div class="nav-item" onclick="switchTab('projects')" id="nav-projects">🗂 投标项目</div>
+    <div class="nav-item" onclick="switchTab('tasks')" id="nav-tasks">✅ 任务看板</div>
+    <div class="nav-item" onclick="switchTab('profile')" id="nav-profile">🏢 企业资料</div>
+    <div class="nav-item" onclick="switchTab('sites')" id="nav-sites">🌐 网站管理</div>
+    <div class="nav-item" onclick="switchTab('keywords')" id="nav-keywords">🔍 关键词</div>
+    <div class="nav-item" onclick="switchTab('scheduler')" id="nav-scheduler">⏰ 调度状态</div>
+    <div class="nav-item" onclick="switchTab('stats')" id="nav-stats">📊 抓取统计</div>
+    <div class="nav-item" onclick="switchTab('alerts')" id="nav-alerts">🚨 告警记录</div>
+  </div>
+  <div class="main" id="main-content">
+    <div class="loading"><div class="spinner"></div> 加载中...</div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="site-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="site-modal-title">添加监控网站</div>
+      <button class="modal-close" onclick="closeModal('site-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-site-id"/>
+      <div class="form-group">
+        <label class="form-label">网站名称 *</label>
+        <input class="form-input" id="site-name" placeholder="如：广东省公共资源交易中心"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">招标列表页 URL *</label>
+        <input class="form-input" id="site-url" placeholder="https://..."/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">来源类型</label>
+        <input class="form-input" id="site-source-type" placeholder="如：建设工程、政府采购、国企采购、限额以下"/>
+        <div class="hint-text">标注此列表页属于什么模块类型。同一个网站不同模块添加多条即可。</div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">每天抓取时间（小时 0-23）</label>
+          <input class="form-input" id="site-hour" type="number" min="0" max="23" value="8"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">每天抓取时间（分钟 0-59）</label>
+          <input class="form-input" id="site-minute" type="number" min="0" max="59" value="0"/>
+        </div>
+      </div>
+      <!-- 抓取模式切换 -->
+      <div class="form-group" style="margin-bottom:1.2rem">
+        <label class="form-label">抓取方式</label>
+        <div style="display:flex;gap:1rem">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:0.5rem 1rem;border:2px solid var(--border);border-radius:2px;background:var(--surface)" id="mode-auto-label" onclick="setCrawlMode('auto')">
+            <input type="radio" name="crawl_mode" value="auto" checked onchange="setCrawlMode('auto')"/>
+            <span>🤖 智能抓取</span>
+            <span class="muted" style="font-size:0.72rem">自动检测结构，无需手动配置</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:0.5rem 1rem;border:2px solid var(--border);border-radius:2px;background:var(--surface)" id="mode-manual-label" onclick="setCrawlMode('manual')">
+            <input type="radio" name="crawl_mode" value="manual" onchange="setCrawlMode('manual')"/>
+            <span>🔧 手动配置</span>
+            <span class="muted" style="font-size:0.72rem">自定义 CSS 选择器</span>
+          </label>
+        </div>
+      </div>
+      <!-- 手动选择器区域 -->
+      <div id="manual-selectors-area">
+        <div class="form-group">
+          <label class="form-label">列表项 CSS 选择器</label>
+          <input class="form-input" id="site-selector" value=".list-item a, .notice-list a"/>
+          <div class="hint-text">留空则自动识别含“招标/采购/公告”等关键词的链接。</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">标题 CSS 选择器</label>
+          <input class="form-input" id="site-title-selector" placeholder="如：.title a"/>
+          <div class="hint-text">当列表项不是标题本身时可填写；留空则优先使用列表项中的首个链接。</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">日期 CSS 选择器</label>
+          <input class="form-input" id="site-date-selector" placeholder="如：.date, .publish-time"/>
+          <div class="hint-text">建议配置真实发布日期元素，系统会自动标准化为 `YYYY-MM-DD` 或 `YYYY-MM-DD HH:mm:ss`。</div>
+        </div>
+        <div class="note-box">
+          建议先点“校验选择器”，确认能抓到标题和发布日期，再保存到站点列表中。
+        </div>
+      </div>
+      <!-- 智能抓取提示 -->
+      <div id="auto-mode-info" style="display:none">
+        <div class="note-box" style="border-left-color:var(--success);background:rgba(39,174,96,0.06)">
+          <strong>🤖 智能抓取模式已开启</strong>
+          <div style="margin-top:6px;font-size:0.82rem;line-height:1.7">
+            <p>系统将自动分析网站结构，识别公告列表、标题链接和发布日期，无需手动配置 CSS 选择器。</p>
+            <p style="margin-top:6px">建议先点“智能检测”预览抓取结果，确认无误后保存。</p>
+          </div>
+        </div>
+      </div>
+      <div class="preview-box" id="site-preview-box" style="display:none"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('site-modal')">取消</button>
+      <button id="preview-btn" class="btn btn-outline" onclick="previewSite()">🔎 校验选择器</button>
+      <button id="analyze-btn" class="btn btn-outline" onclick="analyzeSite()" style="display:none">🤖 智能检测</button>
+      <button class="btn btn-gold" onclick="saveSite()">💾 保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="project-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="project-modal-title">添加投标项目</div>
+      <button class="modal-close" onclick="closeModal('project-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-project-id"/>
+      <input type="hidden" id="project-bid-id"/>
+      <div class="form-group">
+        <label class="form-label">项目名称 *</label>
+        <input class="form-input" id="project-name" placeholder="如：某园区智能化建设项目"/>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">客户/招标单位</label>
+          <input class="form-input" id="project-client" placeholder="客户或招标单位"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">项目编号</label>
+          <input class="form-input" id="project-bid-no" placeholder="招标编号/采购编号"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">阶段</label>
+          <select class="form-select" id="project-stage">
+            <option>线索</option><option>资格预审</option><option>报名中</option><option>标书编制</option>
+            <option>已投标</option><option>澄清答疑</option><option>中标</option><option>未中标</option><option>放弃</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">负责人</label>
+          <input class="form-input" id="project-owner" placeholder="项目负责人"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">投标截止日期</label>
+          <input class="form-input" id="project-deadline" type="date"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">优先级</label>
+          <select class="form-select" id="project-priority"><option>高</option><option selected>中</option><option>低</option></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">预算金额</label>
+          <input class="form-input" id="project-amount" type="number" min="0" step="0.01" placeholder="0"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">中标概率（0-100）</label>
+          <input class="form-input" id="project-probability" type="number" min="0" max="100" value="30"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">下一步动作</label>
+        <input class="form-input" id="project-next-action" placeholder="如：完成资格条件初审"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">项目备注</label>
+        <textarea class="form-textarea textarea-lg" id="project-notes" placeholder="记录客户背景、评分办法、风险点、竞争态势等"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('project-modal')">取消</button>
+      <button class="btn btn-gold" onclick="saveProject()">💾 保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="task-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="task-modal-title">添加任务</div>
+      <button class="modal-close" onclick="closeModal('task-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-task-id"/>
+      <div class="form-group">
+        <label class="form-label">所属项目 *</label>
+        <select class="form-select" id="task-project"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">任务标题 *</label>
+        <input class="form-input" id="task-title" placeholder="如：商务偏离表初稿"/>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">负责人</label>
+          <input class="form-input" id="task-assignee" placeholder="任务负责人"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">截止日期</label>
+          <input class="form-input" id="task-due-date" type="date"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">状态</label>
+          <select class="form-select" id="task-status"><option>待办</option><option>进行中</option><option>已完成</option><option>已取消</option></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">优先级</label>
+          <select class="form-select" id="task-priority"><option>高</option><option selected>中</option><option>低</option></select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">任务说明</label>
+        <textarea class="form-textarea textarea-lg" id="task-description" placeholder="补充交付物、检查点或依赖事项"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('task-modal')">取消</button>
+      <button class="btn btn-gold" onclick="saveTask()">💾 保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="template-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="template-modal-title">添加模板</div>
+      <button class="modal-close" onclick="closeModal('template-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-template-id"/>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">模板标题 *</label>
+          <input class="form-input" id="template-title" placeholder="如：项目实施方案"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">分类</label>
+          <input class="form-input" id="template-category" placeholder="商务/技术/服务/通用"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">模板内容 *</label>
+        <textarea class="form-textarea textarea-lg" id="template-content" placeholder="可放置企业固定响应话术、服务承诺、技术方案结构等"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">启用状态</label>
+        <select class="form-select" id="template-enabled"><option value="1">启用</option><option value="0">停用</option></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('template-modal')">取消</button>
+      <button class="btn btn-gold" onclick="saveTemplate()">💾 保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 登录/注册弹窗 -->
+<div class="modal-overlay" id="auth-modal" style="z-index:300">
+  <div class="modal" style="width:400px">
+    <div class="modal-header" style="justify-content:center">
+      <div class="modal-title">⚖ 企业投标管理系统</div>
+    </div>
+    <div class="modal-body">
+      <!-- 登录表单 -->
+      <div id="auth-login-form">
+        <div class="form-group">
+          <label class="form-label">用户名</label>
+          <input class="form-input" id="login-username" placeholder="输入用户名" onkeydown="if(event.key==='Enter')doLogin()"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">密码</label>
+          <input class="form-input" id="login-password" type="password" placeholder="输入密码" onkeydown="if(event.key==='Enter')doLogin()"/>
+        </div>
+        <div class="form-group" style="display:flex;gap:0.8rem">
+          <button class="btn btn-gold" style="flex:1;justify-content:center" onclick="doLogin()">登 录</button>
+        </div>
+        <div class="hint-text" style="text-align:center;margin-top:0.8rem">
+          还没有账号？<a href="#" onclick="event.preventDefault();showRegister()" style="color:var(--gold)">注册新账号</a>
+        </div>
+      </div>
+      <!-- 注册表单 -->
+      <div id="auth-register-form" style="display:none">
+        <div class="form-group">
+          <label class="form-label">用户名</label>
+          <input class="form-input" id="reg-username" placeholder="输入用户名" onkeydown="if(event.key==='Enter')doRegister()"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">显示名称（可选）</label>
+          <input class="form-input" id="reg-display" placeholder="显示在界面上的名称"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">密码</label>
+          <input class="form-input" id="reg-password" type="password" placeholder="至少 6 位" onkeydown="if(event.key==='Enter')doRegister()"/>
+        </div>
+        <div class="form-group" style="display:flex;gap:0.8rem">
+          <button class="btn btn-gold" style="flex:1;justify-content:center" onclick="doRegister()">注 册</button>
+        </div>
+        <div class="hint-text" style="text-align:center;margin-top:0.8rem">
+          已有账号？<a href="#" onclick="event.preventDefault();showLogin()" style="color:var(--gold)">去登录</a>
+        </div>
+      </div>
+      <div id="auth-error" style="display:none;margin-top:0.8rem;padding:0.6rem;background:rgba(192,57,43,0.08);border-left:3px solid var(--red);color:var(--red);font-size:0.82rem"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+const API = window.location.protocol.startsWith('http') ? window.location.origin + '/api' : 'http://localhost:8000/api'
+
+// ── 认证状态 ──
+let authToken = localStorage.getItem('bid_token') || ''
+let currentUser = null
+
+let currentTab = 'bids'
+let bidsPage = 1
+let bidsKw = ''
+let bidsSite = ''
+let bidsDays = 0
+let bidsFrom = ''
+let bidsTo = ''
+let bidsDateMode = 'all'
+let bidsRead = ''
+let bidsAutoKeywords = true  // 默认开启关键词过滤
+let bidsPreset = 'all'
+let bidsPageSize = 20
+let bidsCurrentRows = []
+let bidsSourceType = ''  // 来源类型筛选
+let sourceTypeOptions = []  // 可用来源类型列表
+let siteCache = []
+let projectCache = []
+let taskCache = []
+let templateCache = []
+let projectStageFilter = ''
+let projectKw = ''
+let taskStatusFilter = ''
+
+function updateClock() {
+  const n = new Date()
+  document.getElementById('topbar-time').textContent = n.toLocaleDateString('zh-CN') + ' ' + n.toLocaleTimeString('zh-CN')
+}
+function today() { return new Date().toISOString().slice(0, 10); }
+setInterval(updateClock, 1000)
+updateClock()
+
+function toast(msg, dur = 2500) {
+  const el = document.getElementById('toast')
+  el.textContent = msg
+  el.classList.add('show')
+  setTimeout(() => el.classList.remove('show'), dur)
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+function safeUrl(value) {
+  try {
+    const url = new URL(value, window.location.href)
+    return ['http:', 'https:'].includes(url.protocol) ? url.href : '#'
+  } catch {
+    return '#'
+  }
+}
+
+function splitKeywords(raw) {
+  return Array.from(new Set(String(raw || '')
+    .split(/[，,、；;\n]+/)
+    .map(item => item.trim())
+    .filter(Boolean)))
+}
+
+function formatText(value, fallback = '-') {
+  const text = String(value ?? '').trim()
+  return text ? escapeHtml(text) : fallback
+}
+
+function badgeClass(priority) {
+  if (priority === '高') return 'badge badge-high'
+  if (priority === '低') return 'badge badge-low'
+  return 'badge badge-mid'
+}
+
+function stageBadge(stage) {
+  const closed = ['中标', '未中标', '放弃'].includes(stage)
+  return `<span class="badge ${closed ? 'badge-low' : 'badge-mid'}">${escapeHtml(stage || '线索')}</span>`
+}
+
+function daysUntil(dateStr) {
+  if (!dateStr) return null
+  const todayDate = new Date(today() + 'T00:00:00')
+  const target = new Date(dateStr + 'T00:00:00')
+  if (Number.isNaN(target.getTime())) return null
+  return Math.ceil((target - todayDate) / 86400000)
+}
+
+function deadlineText(dateStr) {
+  const left = daysUntil(dateStr)
+  if (left === null) return '-'
+  const label = left < 0 ? `逾期 ${Math.abs(left)} 天` : left === 0 ? '今天截止' : `${left} 天后`
+  const color = left < 0 ? 'var(--red)' : left <= 3 ? '#8a6a16' : 'var(--text2)'
+  return `<span class="mono" style="color:${color}">${escapeHtml(dateStr)} · ${label}</span>`
+}
+
+function automaticKeywordString(keywordRows = []) {
+  return keywordRows.map(item => item.word).filter(Boolean).join(',')
+}
+
+function activeBidKeyword(keywordRows = []) {
+  const manual = bidsKw.trim()
+  if (manual) return manual
+  return bidsAutoKeywords ? automaticKeywordString(keywordRows) : ''
+}
+
+function bidQueryParams(keywordRows = [], page = bidsPage, pageSize = bidsPageSize) {
+  const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) })
+  const keyword = activeBidKeyword(keywordRows)
+  if (keyword) params.set('keyword', keyword)
+  if (bidsSite) params.set('site_id', bidsSite)
+  if (bidsRead !== '') params.set('is_new', bidsRead)
+  if (bidsDateMode === 'custom' && bidsFrom) {
+    params.set('date_from', bidsFrom)
+    if (bidsTo) params.set('date_to', bidsTo)
+    params.set('days', '0')
+  } else if (bidsDateMode === 'recent' && Number(bidsDays) > 0) {
+    params.set('days', String(bidsDays))
+  } else {
+    params.set('days', '0')
+  }
+  if (bidsSourceType) params.set('source_type', bidsSourceType)
+  return params
+}
+
+function bidFilterPayload(keywordRows = [], ids = null) {
+  const body = {
+    keyword: activeBidKeyword(keywordRows) || null,
+    site_id: bidsSite ? Number(bidsSite) : null,
+    is_new: bidsRead === '' ? null : Number(bidsRead),
+    days: bidsDateMode === 'recent' ? Number(bidsDays || 0) : 0,
+    date_from: bidsDateMode === 'custom' ? (bidsFrom || null) : null,
+    date_to: bidsDateMode === 'custom' ? (bidsTo || null) : null,
+  }
+  if (ids) body.ids = ids
+  return body
+}
+
+function hasBidScope(keywordRows = []) {
+  return Boolean(activeBidKeyword(keywordRows) || bidsSite || bidsRead !== '' || (bidsDateMode === 'custom' && (bidsFrom || bidsTo)) || (bidsDateMode === 'recent' && Number(bidsDays) > 0))
+}
+
+async function req(path, method = 'GET', body = null, silent = false) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } }
+  if (authToken) opts.headers['Authorization'] = 'Bearer ' + authToken
+  if (body) opts.body = JSON.stringify(body)
+  try {
+    const response = await fetch(API + path, opts)
+    const rawText = await response.text()
+    const data = rawText ? JSON.parse(rawText) : {}
+    if (!response.ok) {
+      const message = data.detail || data.message || `请求失败（${response.status}）`
+      if (response.status === 401 && !silent) {
+        // token 过期，清除并弹登录
+        authToken = ''
+        localStorage.removeItem('bid_token')
+        showAuthModal()
+        return { __error: true, message: '登录已过期，请重新登录', status: 401 }
+      }
+      if (!silent) toast(`⚠ ${message}`, 4000)
+      return { __error: true, message, status: response.status }
+    }
+    return data
+  } catch {
+    if (!silent) toast('⚠ 无法连接后端，请确认 Python 服务已启动（端口 8000）', 4000)
+    return { __error: true, message: '后端不可用' }
+  }
+}
+
+// ── 认证 ──
+function showAuthModal() {
+  document.getElementById('auth-modal').classList.add('open')
+  document.getElementById('auth-login-form').style.display = ''
+  document.getElementById('auth-register-form').style.display = 'none'
+  document.getElementById('auth-error').style.display = 'none'
+  document.getElementById('auth-error').textContent = ''
+}
+
+function hideAuthModal() {
+  document.getElementById('auth-modal').classList.remove('open')
+}
+
+function showRegister() {
+  document.getElementById('auth-login-form').style.display = 'none'
+  document.getElementById('auth-register-form').style.display = ''
+  document.getElementById('auth-error').style.display = 'none'
+}
+
+function showLogin() {
+  document.getElementById('auth-login-form').style.display = ''
+  document.getElementById('auth-register-form').style.display = 'none'
+  document.getElementById('auth-error').style.display = 'none'
+}
+
+function showAuthError(msg) {
+  const el = document.getElementById('auth-error')
+  el.textContent = msg
+  el.style.display = ''
+}
+
+async function doLogin() {
+  const username = document.getElementById('login-username').value.trim()
+  const password = document.getElementById('login-password').value
+  if (!username || !password) { showAuthError('请输入用户名和密码'); return }
+  const result = await req('/auth/login', 'POST', { username, password }, true)
+  if (result.__error) { showAuthError(result.message); return }
+  authToken = result.token
+  currentUser = result.user
+  localStorage.setItem('bid_token', authToken)
+  hideAuthModal()
+  updateUserUI()
+  render()
+}
+
+async function doRegister() {
+  const username = document.getElementById('reg-username').value.trim()
+  const password = document.getElementById('reg-password').value
+  const display_name = document.getElementById('reg-display').value.trim()
+  if (!username || !password) { showAuthError('用户名和密码不能为空'); return }
+  if (password.length < 6) { showAuthError('密码至少 6 位'); return }
+  const result = await req('/auth/register', 'POST', { username, password, display_name }, true)
+  if (result.__error) { showAuthError(result.message); return }
+  authToken = result.token
+  currentUser = result.user
+  localStorage.setItem('bid_token', authToken)
+  hideAuthModal()
+  updateUserUI()
+  toast('✅ 注册成功')
+  render()
+}
+
+function doLogout() {
+  if (authToken) {
+    req('/auth/logout', 'POST', null, true)
+  }
+  authToken = ''
+  currentUser = null
+  localStorage.removeItem('bid_token')
+  updateUserUI()
+  showAuthModal()
+}
+
+function updateUserUI() {
+  const userEl = document.getElementById('topbar-user')
+  const logoutBtn = document.getElementById('logout-btn')
+  if (currentUser) {
+    userEl.style.display = ''
+    userEl.textContent = '👤 ' + (currentUser.display_name || currentUser.username)
+    logoutBtn.style.display = ''
+  } else {
+    userEl.style.display = 'none'
+    logoutBtn.style.display = 'none'
+  }
+}
+
+async function checkAuth() {
+  if (!authToken) {
+    showAuthModal()
+    return false
+  }
+  const result = await req('/auth/me', 'GET', null, true)
+  if (result.__error) {
+    authToken = ''
+    localStorage.removeItem('bid_token')
+    showAuthModal()
+    return false
+  }
+  currentUser = result
+  updateUserUI()
+  return true
+}
+
+function switchTab(tab) {
+  currentTab = tab
+  document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'))
+  document.getElementById('nav-' + tab).classList.add('active')
+  render()
+}
+
+async function render() {
+  const el = document.getElementById('main-content')
+  if (currentTab === 'bids') await renderBids(el)
+  else if (currentTab === 'projects') await renderProjects(el)
+  else if (currentTab === 'tasks') await renderTasks(el)
+  else if (currentTab === 'profile') await renderProfile(el)
+  else if (currentTab === 'sites') await renderSites(el)
+  else if (currentTab === 'keywords') await renderKeywords(el)
+  else if (currentTab === 'scheduler') await renderScheduler(el)
+  else if (currentTab === 'stats') await renderStats(el)
+  else if (currentTab === 'alerts') await renderAlerts(el)
+  else await renderScheduler(el)
+}
+
+async function renderBids(el) {
+  const [stats, sites, keywords, sourceTypes] = await Promise.all([req('/stats'), req('/sites'), req('/keywords'), req('/source-types')])
+  if (stats.__error || sites.__error || keywords.__error) return
+  sourceTypeOptions = sourceTypes.__error ? [] : sourceTypes
+
+  const badge = document.getElementById('new-badge')
+  badge.style.display = stats.new_bids > 0 ? '' : 'none'
+  badge.textContent = stats.new_bids > 0 ? stats.new_bids : ''
+  siteCache = sites
+
+  const data = await req('/bids?' + bidQueryParams(keywords).toString())
+  if (data.__error) return
+  bidsCurrentRows = data.items || []
+
+  const totalPages = Math.max(1, Math.ceil(data.total / bidsPageSize))
+  if (bidsPage > totalPages) {
+    bidsPage = totalPages
+    return render()
+  }
+
+  const siteOptions = sites.map(site =>
+    `<option value="${site.id}" ${String(bidsSite) === String(site.id) ? 'selected' : ''}>${escapeHtml(site.name)}</option>`
+  ).join('')
+
+  const rowsHtml = bidsCurrentRows.length === 0
+    ? `<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📭</div>当前条件下没有公告</div></td></tr>`
+    : bidsCurrentRows.map(row => renderBidRow(row)).join('')
+
+  const activeScope = renderBidScope(data.total, sites, keywords)
+  const autoKeywordPanel = renderAutoKeywordPanel(keywords)
+  const readButtonText = hasBidScope(keywords) ? '✓ 当前条件标记已读' : '✓ 本页标记已读'
+  const keywordToggleText = bidsAutoKeywords ? '🔎 关闭关键词过滤' : '🔎 开启关键词过滤'
+  const keywordToggleClass = bidsAutoKeywords ? 'btn-gold' : 'btn-outline'
+  const keywordToggleDisabled = keywords.length ? '' : 'disabled'
+
+  // 来源类型筛选
+  const sourceTypeOpts = sourceTypeOptions.map(st =>
+    `<option value="${escapeHtml(st)}" ${bidsSourceType === st ? 'selected' : ''}>${escapeHtml(st)}</option>`
+  ).join('')
+  const sourceTypeShow = sourceTypeOptions.length ? '' : 'style="display:none"'
+
+  el.innerHTML = `
+    <div class="stats-grid">
+      ${renderBidStatCard('all', '总招标条数', stats.total_bids, '查看全部公告')}
+      ${renderBidStatCard('today', '今日新增', stats.today_bids, '查看今日抓取', true)}
+      ${renderBidStatCard('unread', '未读条目', stats.new_bids, '查看未读公告', true)}
+      ${renderBidStatCard('enabled-sites', '监控网站', stats.enabled_sites, '进入网站管理')}
+      ${renderBidStatCard('all-sites', '全部网站', stats.total_sites, '查看全部站点')}
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">📋 招标公告明细</div>
+        <div class="panel-actions">
+          <button class="btn btn-outline btn-sm" onclick="markVisibleRead()">${readButtonText}</button>
+          <button class="btn btn-outline btn-sm" onclick="exportBids()">📥 导出当前条件</button>
+          <button class="btn ${keywordToggleClass} btn-sm" onclick="toggleAutoKeywords()" ${keywordToggleDisabled}>${keywordToggleText}</button>
+          <button class="btn btn-outline btn-sm" onclick="crawlAll()">⚡ 立即全量抓取</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="bid-filter-board">
+          <div class="search-wrap">
+            <span class="search-icon">🔍</span>
+            <input class="form-input search-input" placeholder="搜索标题关键词，回车生效" value="${escapeHtml(bidsKw)}"
+              onkeydown="if(event.key==='Enter'){setBidSearch(this.value)}"/>
+          </div>
+          <select class="form-select" onchange="setBidSite(this.value)">
+            <option value="">全部网站</option>${siteOptions}
+          </select>
+          <select class="form-select" onchange="setBidReadFilter(this.value)">
+            <option value="" ${bidsRead === '' ? 'selected' : ''}>全部状态</option>
+            <option value="1" ${bidsRead === '1' ? 'selected' : ''}>只看未读</option>
+            <option value="0" ${bidsRead === '0' ? 'selected' : ''}>只看已读</option>
+          </select>
+          <select class="form-select" onchange="setBidDateMode(this.value)">
+            <option value="all" ${bidsDateMode === 'all' ? 'selected' : ''}>全部时间</option>
+            <option value="1" ${bidsDateMode === 'recent' && bidsDays === 1 ? 'selected' : ''}>近 1 天</option>
+            <option value="3" ${bidsDateMode === 'recent' && bidsDays === 3 ? 'selected' : ''}>近 3 天</option>
+            <option value="7" ${bidsDateMode === 'recent' && bidsDays === 7 ? 'selected' : ''}>近 7 天</option>
+            <option value="30" ${bidsDateMode === 'recent' && bidsDays === 30 ? 'selected' : ''}>近 30 天</option>
+            <option value="custom" ${bidsDateMode === 'custom' ? 'selected' : ''}>自定义</option>
+          </select>
+          <select class="form-select" onchange="setBidSourceType(this.value)" ${sourceTypeShow}>
+            <option value="">全部类型</option>${sourceTypeOpts}
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="resetFilters()">重置全部</button>
+        </div>
+        <div class="bid-range" style="display:${bidsDateMode === 'custom' ? 'flex' : 'none'}">
+          <input type="date" class="form-input" style="width:150px" value="${escapeHtml(bidsFrom)}" onchange="setBidDateRange(this.value, bidsTo)"/>
+          <span class="muted">至</span>
+          <input type="date" class="form-input" style="width:150px" value="${escapeHtml(bidsTo)}" onchange="setBidDateRange(bidsFrom, this.value)"/>
+        </div>
+        ${autoKeywordPanel}
+        ${activeScope}
+        <div class="note-box" style="margin-top:0;margin-bottom:1rem">
+          默认显示全部公告，不再自动套用关键词；需要关键词过滤时请打开“自动关键词过滤”或直接搜索。
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th style="width:38%">标题</th><th>来源网站</th><th>来源类型</th><th>发布日期</th><th>抓取时间</th><th style="width:130px">操作</th></tr></thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <div class="page-info">共 ${data.total} 条，第 ${bidsPage}/${totalPages} 页</div>
+          <button class="page-btn" onclick="setBidPage(1)" ${bidsPage <= 1 ? 'disabled' : ''}>«</button>
+          <button class="page-btn" onclick="setBidPage(bidsPage - 1)" ${bidsPage <= 1 ? 'disabled' : ''}>‹</button>
+          <button class="page-btn active">${bidsPage}</button>
+          <button class="page-btn" onclick="setBidPage(bidsPage + 1)" ${bidsPage >= totalPages ? 'disabled' : ''}>›</button>
+          <button class="page-btn" onclick="setBidPage(${totalPages})" ${bidsPage >= totalPages ? 'disabled' : ''}>»</button>
+        </div>
+      </div>
+    </div>`
+}
+
+function renderBidRow(row) {
+  const url = safeUrl(row.url)
+  const st = (row.source_type || '').trim()
+  const stHtml = st ? `<span class="badge" style="background:rgba(201,168,76,0.12);color:#8a6a16;font-size:0.7rem">${escapeHtml(st)}</span>` : '<span class="muted">-</span>'
+  return `
+    <tr>
+      <td class="td-title">
+        ${row.is_new ? '<span class="tag-new">NEW</span>' : ''}
+        <a href="${url}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(row.title)}">${escapeHtml(row.title)}</a>
+      </td>
+      <td><span class="mono">${formatText(row.site_name)}</span></td>
+      <td>${stHtml}</td>
+      <td><span class="mono">${formatText(row.pub_date)}</span></td>
+      <td><span class="mono">${formatText((row.crawl_time || '').slice(0, 19))}</span></td>
+      <td style="display:flex;gap:5px;flex-wrap:wrap">
+        <button class="btn btn-outline btn-sm" onclick="createProjectFromBid(${row.id})">转项目</button>
+        <button class="btn btn-danger btn-sm" onclick="delBid(${row.id})">删除</button>
+      </td>
+    </tr>`
+}
+
+function renderBidStatCard(kind, label, value, hint, highlight = false) {
+  const cardActive = bidsPreset === kind ? ' active' : ''
+  const click = kind === 'enabled-sites' || kind === 'all-sites'
+    ? "switchTab('sites')"
+    : `applyBidPreset('${kind}')`
+  return `<div class="stat-card clickable${cardActive}" onclick="${click}" title="${escapeHtml(hint)}">
+    <div class="stat-label">${escapeHtml(label)}</div>
+    <div class="stat-value ${highlight ? 'highlight' : ''}">${value}</div>
+    <div class="muted">${escapeHtml(hint)}</div>
+  </div>`
+}
+
+function renderAutoKeywordPanel(keywords) {
+  if (!keywords.length) {
+    return `<div class="bid-chip-row"><span>自动关键词过滤：</span><span class="muted">暂未配置关键词</span><button class="bid-chip" onclick="switchTab('keywords')">去配置</button></div>`
+  }
+  const chips = keywords.map(item =>
+    `<button class="bid-chip" data-word="${escapeHtml(item.word)}" onclick="useSingleAutoKeyword(this.dataset.word)">${escapeHtml(item.word)}</button>`
+  ).join('')
+  const enabledLabel = bidsAutoKeywords ? '关闭自动过滤' : '开启自动过滤'
+  const stateText = bidsAutoKeywords
+    ? '已按全部关键词过滤'
+    : '未启用，当前默认显示全部公告'
+  return `<div class="bid-chip-row">
+    <span>自动关键词过滤：</span>
+    <button class="bid-chip ${bidsAutoKeywords ? 'active' : ''}" onclick="toggleAutoKeywords()">${enabledLabel}</button>
+    ${chips}
+    <span class="muted">${stateText}</span>
+  </div>`
+}
+
+function renderBidScope(total, sites, keywords) {
+  const labels = []
+  const keyword = activeBidKeyword(keywords)
+  if (keyword) labels.push(`关键词：${keyword}`)
+  if (bidsSite) {
+    const site = sites.find(item => String(item.id) === String(bidsSite))
+    labels.push(`网站：${site ? site.name : bidsSite}`)
+  }
+  if (bidsRead === '1') labels.push('状态：未读')
+  if (bidsRead === '0') labels.push('状态：已读')
+  if (bidsDateMode === 'recent') labels.push(`时间：近 ${bidsDays} 天`)
+  if (bidsDateMode === 'custom') labels.push(`时间：${bidsFrom || '开始'} 至 ${bidsTo || '现在'}`)
+  if (!labels.length) labels.push('全部公告')
+  return `<div class="bid-scope">
+    <span>当前明细：</span>
+    ${labels.map(item => `<strong>${escapeHtml(item)}</strong>`).join('<span>/</span>')}
+    <span>命中 ${total} 条</span>
+  </div>`
+}
+
+function setBidSearch(value) {
+  bidsKw = String(value || '').trim()
+  if (bidsKw) bidsAutoKeywords = false
+  bidsPreset = 'custom'
+  bidsPage = 1
+  render()
+}
+
+function setBidSite(value) {
+  bidsSite = value
+  bidsPreset = 'custom'
+  bidsPage = 1
+  render()
+}
+
+function setBidReadFilter(value) {
+  bidsRead = value
+  bidsPreset = value === '1' ? 'unread' : 'custom'
+  bidsPage = 1
+  render()
+}
+
+function setBidDateMode(value) {
+  if (value === 'all') {
+    bidsDateMode = 'all'
+    bidsDays = 0
+    bidsFrom = ''
+    bidsTo = ''
+  } else if (value === 'custom') {
+    bidsDateMode = 'custom'
+  } else {
+    bidsDateMode = 'recent'
+    bidsDays = Number(value)
+    bidsFrom = ''
+    bidsTo = ''
+  }
+  bidsPreset = 'custom'
+  bidsPage = 1
+  render()
+}
+
+function setBidDateRange(from, to) {
+  bidsDateMode = 'custom'
+  bidsFrom = from || ''
+  bidsTo = to || ''
+  bidsPreset = 'custom'
+  bidsPage = 1
+  render()
+}
+
+function setBidPage(page) {
+  bidsPage = Math.max(1, Number(page) || 1)
+  render()
+}
+
+function toggleAutoKeywords() {
+  bidsAutoKeywords = !bidsAutoKeywords
+  if (bidsAutoKeywords) bidsKw = ''
+  bidsPreset = 'custom'
+  bidsPage = 1
+  render()
+}
+
+function useSingleAutoKeyword(word) {
+  bidsKw = word
+  bidsAutoKeywords = false
+  bidsPreset = 'custom'
+  bidsPage = 1
+  render()
+}
+
+function setBidSourceType(value) {
+  bidsSourceType = value
+  bidsPreset = 'custom'
+  bidsPage = 1
+  render()
+}
+
+function applyBidPreset(kind) {
+  bidsPreset = kind
+  bidsKw = ''
+  bidsSite = ''
+  bidsAutoKeywords = false
+  bidsRead = ''
+  bidsDateMode = 'all'
+  bidsDays = 0
+  bidsFrom = ''
+  bidsTo = ''
+  bidsSourceType = ''
+  if (kind === 'today') {
+    bidsDateMode = 'custom'
+    bidsFrom = today()
+    bidsTo = today()
+  } else if (kind === 'unread') {
+    bidsRead = '1'
+  }
+  bidsPage = 1
+  render()
+}
+
+function resetFilters() {
+  applyBidPreset('all')
+}
+
+async function markVisibleRead() {
+  const keywords = await req('/keywords', 'GET', null, true)
+  const safeKeywords = keywords.__error ? [] : keywords
+  const scoped = hasBidScope(safeKeywords)
+  const pageIds = bidsCurrentRows.filter(item => item.is_new).map(item => item.id)
+  if (!scoped && pageIds.length === 0) {
+    toast('当前页没有未读公告')
+    return
+  }
+  const message = scoped ? '确认将当前筛选条件下的公告标记为已读吗？' : '未设置筛选条件，将只标记当前页未读公告。确认继续吗？'
+  if (!confirm(message)) return
+  const body = scoped ? bidFilterPayload(safeKeywords) : bidFilterPayload(safeKeywords, pageIds)
+  const result = await req('/bids/mark-read', 'POST', body)
+  if (!result.__error) {
+    toast(`✅ ${result.message}`)
+    render()
+  }
+}
+
+async function delBid(id) {
+  if (!confirm('确认删除这条公告吗？')) return
+  const result = await req('/bids/' + id, 'DELETE')
+  if (!result.__error) {
+    toast('已删除')
+    render()
+  }
+}
+
+async function createProjectFromBid(id) {
+  const result = await req('/projects/from-bid/' + id, 'POST', {})
+  if (!result.__error) {
+    toast('✅ ' + result.message)
+    currentTab = 'projects'
+    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'))
+    document.getElementById('nav-projects').classList.add('active')
+    render()
+  }
+}
+
+async function crawlAll() {
+  const result = await req('/crawl-all', 'POST')
+  if (!result.__error) {
+    toast('⚡ 已触发全量抓取，请稍后刷新查看结果', 4000)
+    setTimeout(render, 6000)
+  }
+}
+
+async function exportBids(format = 'csv') {
+  const keywords = await req('/keywords', 'GET', null, true)
+  const params = bidQueryParams(keywords.__error ? [] : keywords, 1, bidsPageSize)
+  params.delete('page')
+  params.delete('page_size')
+  params.set('format', format)
+  window.location.href = API + '/bids/export?' + params.toString()
+}
+
+async function renderProjects(el) {
+  const params = new URLSearchParams()
+  if (projectStageFilter) params.append('stage', projectStageFilter)
+  if (projectKw.trim()) params.append('keyword', projectKw.trim())
+  const [dash, projects] = await Promise.all([req('/enterprise/dashboard'), req('/projects?' + params.toString())])
+  if (dash.__error || projects.__error) return
+  projectCache = projects
+  const stageOptions = ['线索', '资格预审', '报名中', '标书编制', '已投标', '澄清答疑', '中标', '未中标', '放弃']
+    .map(stage => `<option value="${stage}" ${projectStageFilter === stage ? 'selected' : ''}>${stage}</option>`).join('')
+  const stageBars = dash.stage_counts.length
+    ? dash.stage_counts.map(item => `<span class="badge">${escapeHtml(item.stage || '未分组')} ${item.count}</span>`).join('')
+    : '<span class="muted">暂无项目阶段数据</span>'
+  const upcoming = dash.upcoming_projects.length
+    ? dash.upcoming_projects.map(item => `<div class="preview-item">
+        <div><strong>${escapeHtml(item.project_name)}</strong></div>
+        <div class="muted">${escapeHtml(item.owner || '未指定负责人')} · ${deadlineText(item.bid_deadline)} · ${escapeHtml(item.stage)}</div>
+      </div>`).join('')
+    : '<div class="muted">暂无临近截止项目</div>'
+  const rowsHtml = projects.length === 0
+    ? '<tr><td colspan="9"><div class="empty-state"><div class="empty-icon">🗂</div>暂无投标项目，可从公告列表点击“转项目”</div></td></tr>'
+    : projects.map(item => {
+      const total = item.total_tasks || 0
+      const done = item.done_tasks || 0
+      const progress = total ? Math.round((done / total) * 100) : 0
+      return `<tr>
+        <td>
+          <strong>${escapeHtml(item.project_name)}</strong>
+          <div class="muted">${escapeHtml(item.client_name || item.source_site || '客户待补充')}</div>
+        </td>
+        <td>${stageBadge(item.stage)}</td>
+        <td><span class="${badgeClass(item.priority)}">${escapeHtml(item.priority || '中')}</span></td>
+        <td>${formatText(item.owner)}</td>
+        <td>${deadlineText(item.bid_deadline)}</td>
+        <td class="mono">${(item.estimated_amount || 0).toLocaleString('zh-CN')}</td>
+        <td>
+          <div class="progressbar"><span style="width:${progress}%"></span></div>
+          <div class="muted">${done}/${total} 项完成${item.overdue_tasks ? ` · ${item.overdue_tasks} 项逾期` : ''}</div>
+        </td>
+        <td class="mono">${item.win_probability || 0}%</td>
+        <td style="display:flex;gap:5px;flex-wrap:wrap">
+          <button class="btn btn-outline btn-sm" onclick="downloadProposal(${item.id})">草稿</button>
+          <button class="btn btn-ghost btn-sm" onclick="openAddTask(${item.id})">任务</button>
+          <button class="btn btn-ghost btn-sm" onclick="openEditProject(${item.id})">编辑</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteProject(${item.id})">删除</button>
+        </td>
+      </tr>`
+    }).join('')
+
+  el.innerHTML = `
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-label">项目总数</div><div class="stat-value">${dash.total_projects}</div></div>
+      <div class="stat-card"><div class="stat-label">推进中</div><div class="stat-value">${dash.active_projects}</div></div>
+      <div class="stat-card"><div class="stat-label">7天内截止</div><div class="stat-value highlight">${dash.due_soon}</div></div>
+      <div class="stat-card"><div class="stat-label">逾期任务</div><div class="stat-value highlight">${dash.overdue_tasks}</div></div>
+      <div class="stat-card"><div class="stat-label">启用模板</div><div class="stat-value">${dash.enabled_templates}</div></div>
+    </div>
+    <div class="two-col" style="margin-bottom:1.2rem">
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">📌 阶段分布</div></div>
+        <div class="panel-body" style="display:flex;gap:0.45rem;flex-wrap:wrap">${stageBars}</div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">⏳ 临近截止</div></div>
+        <div class="panel-body"><div class="preview-list">${upcoming}</div></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">🗂 投标项目库</div>
+        <div class="panel-actions"><button class="btn btn-gold btn-sm" onclick="openAddProject()">＋ 添加项目</button></div>
+      </div>
+      <div class="panel-body">
+        <div class="filter-bar">
+          <div class="search-wrap" style="max-width:260px">
+            <span class="search-icon">🔍</span>
+            <input class="form-input search-input" placeholder="搜索项目/客户/编号..." value="${escapeHtml(projectKw)}"
+              onkeydown="if(event.key==='Enter'){projectKw=this.value.trim();render()}"/>
+          </div>
+          <select class="form-select" style="width:150px" onchange="projectStageFilter=this.value;render()">
+            <option value="">全部阶段</option>${stageOptions}
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="projectKw='';projectStageFilter='';render()">重置</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>项目</th><th>阶段</th><th>优先级</th><th>负责人</th><th>截止</th><th>预算</th><th>任务进度</th><th>概率</th><th>操作</th></tr></thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>`
+}
+
+function getProjectFormBody() {
+  return {
+    bid_id: document.getElementById('project-bid-id').value ? Number(document.getElementById('project-bid-id').value) : null,
+    project_name: document.getElementById('project-name').value.trim(),
+    client_name: document.getElementById('project-client').value.trim(),
+    bid_no: document.getElementById('project-bid-no').value.trim(),
+    stage: document.getElementById('project-stage').value,
+    owner: document.getElementById('project-owner').value.trim(),
+    priority: document.getElementById('project-priority').value,
+    bid_deadline: document.getElementById('project-deadline').value,
+    estimated_amount: Number(document.getElementById('project-amount').value || 0),
+    win_probability: Number(document.getElementById('project-probability').value || 0),
+    next_action: document.getElementById('project-next-action').value.trim(),
+    notes: document.getElementById('project-notes').value.trim(),
+  }
+}
+
+function openAddProject() {
+  document.getElementById('project-modal-title').textContent = '添加投标项目'
+  document.getElementById('edit-project-id').value = ''
+  document.getElementById('project-bid-id').value = ''
+  document.getElementById('project-name').value = ''
+  document.getElementById('project-client').value = ''
+  document.getElementById('project-bid-no').value = ''
+  document.getElementById('project-stage').value = '线索'
+  document.getElementById('project-owner').value = ''
+  document.getElementById('project-priority').value = '中'
+  document.getElementById('project-deadline').value = ''
+  document.getElementById('project-amount').value = ''
+  document.getElementById('project-probability').value = 30
+  document.getElementById('project-next-action').value = ''
+  document.getElementById('project-notes').value = ''
+  document.getElementById('project-modal').classList.add('open')
+}
+
+function openEditProject(id) {
+  const item = projectCache.find(row => row.id === id)
+  if (!item) return
+  document.getElementById('project-modal-title').textContent = '编辑投标项目'
+  document.getElementById('edit-project-id').value = id
+  document.getElementById('project-bid-id').value = item.bid_id || ''
+  document.getElementById('project-name').value = item.project_name || ''
+  document.getElementById('project-client').value = item.client_name || ''
+  document.getElementById('project-bid-no').value = item.bid_no || ''
+  document.getElementById('project-stage').value = item.stage || '线索'
+  document.getElementById('project-owner').value = item.owner || ''
+  document.getElementById('project-priority').value = item.priority || '中'
+  document.getElementById('project-deadline').value = item.bid_deadline || ''
+  document.getElementById('project-amount').value = item.estimated_amount || ''
+  document.getElementById('project-probability').value = item.win_probability || 0
+  document.getElementById('project-next-action').value = item.next_action || ''
+  document.getElementById('project-notes').value = item.notes || ''
+  document.getElementById('project-modal').classList.add('open')
+}
+
+async function saveProject() {
+  const id = document.getElementById('edit-project-id').value
+  const body = getProjectFormBody()
+  if (!body.project_name) {
+    toast('⚠ 项目名称不能为空')
+    return
+  }
+  const result = id ? await req('/projects/' + id, 'PUT', body) : await req('/projects', 'POST', body)
+  if (!result.__error) {
+    toast(id ? '✅ 项目已更新' : '✅ 项目已创建')
+    closeModal('project-modal')
+    render()
+  }
+}
+
+async function deleteProject(id) {
+  if (!confirm('确认删除该投标项目及其任务吗？')) return
+  const result = await req('/projects/' + id, 'DELETE')
+  if (!result.__error) {
+    toast('已删除')
+    render()
+  }
+}
+
+function downloadProposal(id) {
+  window.location.href = API + '/projects/' + id + '/proposal'
+}
+
+function projectOptions(selected = '') {
+  return projectCache.map(item => `<option value="${item.id}" ${String(selected) === String(item.id) ? 'selected' : ''}>${escapeHtml(item.project_name)}</option>`).join('')
+}
+
+async function renderTasks(el) {
+  const params = new URLSearchParams()
+  if (taskStatusFilter) params.append('status', taskStatusFilter)
+  const [tasks, projects] = await Promise.all([req('/tasks?' + params.toString()), req('/projects')])
+  if (tasks.__error || projects.__error) return
+  taskCache = tasks
+  projectCache = projects
+  const statuses = ['待办', '进行中', '已完成', '已取消']
+  const statusOptions = statuses.map(status => `<option value="${status}" ${taskStatusFilter === status ? 'selected' : ''}>${status}</option>`).join('')
+  const columns = statuses.map(status => {
+    const items = tasks.filter(task => task.status === status)
+    return `<div class="kanban-col">
+      <div class="kanban-head"><strong>${status}</strong><span>${items.length}</span></div>
+      ${items.length === 0 ? '<div class="empty-state" style="padding:1.4rem;font-size:0.8rem">暂无任务</div>' : items.map(task => {
+        const overdue = task.status !== '已完成' && task.status !== '已取消' && daysUntil(task.due_date) !== null && daysUntil(task.due_date) < 0
+        return `<div class="task-card ${overdue ? 'overdue' : ''}">
+          <div class="task-title">${escapeHtml(task.title)}</div>
+          <div class="muted">${escapeHtml(task.project_name || '-')}</div>
+          <div style="margin:0.5rem 0;display:flex;gap:4px;flex-wrap:wrap">
+            <span class="${badgeClass(task.priority)}">${escapeHtml(task.priority || '中')}</span>
+            <span class="badge">${escapeHtml(task.assignee || '未分配')}</span>
+          </div>
+          <div>${deadlineText(task.due_date)}</div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:0.7rem">
+            ${task.status !== '已完成' ? `<button class="btn btn-outline btn-sm" onclick="quickTaskStatus(${task.id}, '已完成')">完成</button>` : ''}
+            <button class="btn btn-ghost btn-sm" onclick="openEditTask(${task.id})">编辑</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteTask(${task.id})">删除</button>
+          </div>
+        </div>`
+      }).join('')}
+    </div>`
+  }).join('')
+  el.innerHTML = `
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">✅ 投标任务看板</div>
+        <div class="panel-actions"><button class="btn btn-gold btn-sm" onclick="openAddTask()">＋ 添加任务</button></div>
+      </div>
+      <div class="panel-body">
+        <div class="filter-bar">
+          <select class="form-select" style="width:150px" onchange="taskStatusFilter=this.value;render()">
+            <option value="">全部状态</option>${statusOptions}
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="taskStatusFilter='';render()">重置</button>
+        </div>
+        <div class="kanban-grid">${columns}</div>
+      </div>
+    </div>`
+}
+
+async function fillTaskProjectSelect(selected = '') {
+  if (!projectCache.length) {
+    const projects = await req('/projects', 'GET', null, true)
+    if (!projects.__error) projectCache = projects
+  }
+  document.getElementById('task-project').innerHTML = projectOptions(selected)
+}
+
+async function openAddTask(projectId = '') {
+  await fillTaskProjectSelect(projectId)
+  if (!projectCache.length) {
+    toast('⚠ 请先创建投标项目')
+    return
+  }
+  document.getElementById('task-modal-title').textContent = '添加任务'
+  document.getElementById('edit-task-id').value = ''
+  document.getElementById('task-project').value = projectId || projectCache[0].id
+  document.getElementById('task-title').value = ''
+  document.getElementById('task-assignee').value = ''
+  document.getElementById('task-due-date').value = ''
+  document.getElementById('task-status').value = '待办'
+  document.getElementById('task-priority').value = '中'
+  document.getElementById('task-description').value = ''
+  document.getElementById('task-modal').classList.add('open')
+}
+
+async function openEditTask(id) {
+  const item = taskCache.find(row => row.id === id)
+  if (!item) return
+  await fillTaskProjectSelect(item.project_id)
+  document.getElementById('task-modal-title').textContent = '编辑任务'
+  document.getElementById('edit-task-id').value = id
+  document.getElementById('task-project').value = item.project_id
+  document.getElementById('task-title').value = item.title || ''
+  document.getElementById('task-assignee').value = item.assignee || ''
+  document.getElementById('task-due-date').value = item.due_date || ''
+  document.getElementById('task-status').value = item.status || '待办'
+  document.getElementById('task-priority').value = item.priority || '中'
+  document.getElementById('task-description').value = item.description || ''
+  document.getElementById('task-modal').classList.add('open')
+}
+
+function getTaskFormBody() {
+  return {
+    project_id: Number(document.getElementById('task-project').value),
+    title: document.getElementById('task-title').value.trim(),
+    assignee: document.getElementById('task-assignee').value.trim(),
+    due_date: document.getElementById('task-due-date').value,
+    status: document.getElementById('task-status').value,
+    priority: document.getElementById('task-priority').value,
+    description: document.getElementById('task-description').value.trim(),
+  }
+}
+
+async function saveTask() {
+  const id = document.getElementById('edit-task-id').value
+  const body = getTaskFormBody()
+  if (!body.project_id || !body.title) {
+    toast('⚠ 项目和任务标题不能为空')
+    return
+  }
+  const result = id ? await req('/tasks/' + id, 'PUT', body) : await req('/tasks', 'POST', body)
+  if (!result.__error) {
+    toast(id ? '✅ 任务已更新' : '✅ 任务已创建')
+    closeModal('task-modal')
+    render()
+  }
+}
+
+async function quickTaskStatus(id, status) {
+  const result = await req('/tasks/' + id, 'PUT', { status })
+  if (!result.__error) {
+    toast('✅ 任务状态已更新')
+    render()
+  }
+}
+
+async function deleteTask(id) {
+  if (!confirm('确认删除该任务吗？')) return
+  const result = await req('/tasks/' + id, 'DELETE')
+  if (!result.__error) {
+    toast('已删除')
+    render()
+  }
+}
+
+async function renderProfile(el) {
+  const [profile, templates] = await Promise.all([req('/company-profile'), req('/templates')])
+  if (profile.__error || templates.__error) return
+  templateCache = templates
+  const templateHtml = templates.length === 0
+    ? '<div class="muted">暂无模板</div>'
+    : templates.map(item => `<div class="template-item">
+        <div style="display:flex;justify-content:space-between;gap:0.8rem;align-items:flex-start">
+          <div>
+            <strong>${escapeHtml(item.title)}</strong>
+            <div class="muted">${escapeHtml(item.category || '通用')} · ${item.enabled ? '启用' : '停用'}</div>
+          </div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap">
+            <button class="btn btn-ghost btn-sm" onclick="openEditTemplate(${item.id})">编辑</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteTemplate(${item.id})">删除</button>
+          </div>
+        </div>
+        <div class="muted" style="margin-top:0.6rem;line-height:1.7">${escapeHtml(item.content)}</div>
+      </div>`).join('')
+  el.innerHTML = `
+    <div class="profile-grid">
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">🏢 企业基础资料</div><button class="btn btn-gold btn-sm" onclick="saveProfile()">💾 保存资料</button></div>
+        <div class="panel-body">
+          <div class="form-group"><label class="form-label">公司名称</label><input class="form-input" id="profile-company" value="${escapeHtml(profile.company_name || '')}"/></div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">联系人</label><input class="form-input" id="profile-contact" value="${escapeHtml(profile.contact_person || '')}"/></div>
+            <div class="form-group"><label class="form-label">电话</label><input class="form-input" id="profile-phone" value="${escapeHtml(profile.phone || '')}"/></div>
+          </div>
+          <div class="form-group"><label class="form-label">邮箱</label><input class="form-input" id="profile-email" value="${escapeHtml(profile.email || '')}"/></div>
+          <div class="form-group"><label class="form-label">地址</label><input class="form-input" id="profile-address" value="${escapeHtml(profile.address || '')}"/></div>
+          <div class="form-group"><label class="form-label">资质能力</label><textarea class="form-textarea textarea-lg" id="profile-qualification">${escapeHtml(profile.qualification || '')}</textarea></div>
+          <div class="form-group"><label class="form-label">核心优势</label><textarea class="form-textarea textarea-lg" id="profile-advantage">${escapeHtml(profile.core_advantage || '')}</textarea></div>
+          <div class="form-group"><label class="form-label">服务承诺</label><textarea class="form-textarea textarea-lg" id="profile-service">${escapeHtml(profile.service_commitment || '')}</textarea></div>
+          <div class="form-group"><label class="form-label">相关案例</label><textarea class="form-textarea textarea-lg" id="profile-cases">${escapeHtml(profile.case_studies || '')}</textarea></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">📚 标书内容模板</div>
+          <button class="btn btn-gold btn-sm" onclick="openAddTemplate()">＋ 添加模板</button>
+        </div>
+        <div class="panel-body"><div class="template-list">${templateHtml}</div></div>
+      </div>
+    </div>`
+}
+
+async function saveProfile() {
+  const body = {
+    company_name: document.getElementById('profile-company').value.trim(),
+    contact_person: document.getElementById('profile-contact').value.trim(),
+    phone: document.getElementById('profile-phone').value.trim(),
+    email: document.getElementById('profile-email').value.trim(),
+    address: document.getElementById('profile-address').value.trim(),
+    qualification: document.getElementById('profile-qualification').value.trim(),
+    core_advantage: document.getElementById('profile-advantage').value.trim(),
+    service_commitment: document.getElementById('profile-service').value.trim(),
+    case_studies: document.getElementById('profile-cases').value.trim(),
+  }
+  const result = await req('/company-profile', 'PUT', body)
+  if (!result.__error) toast('✅ 企业资料已保存')
+}
+
+function openAddTemplate() {
+  document.getElementById('template-modal-title').textContent = '添加模板'
+  document.getElementById('edit-template-id').value = ''
+  document.getElementById('template-title').value = ''
+  document.getElementById('template-category').value = '通用'
+  document.getElementById('template-content').value = ''
+  document.getElementById('template-enabled').value = '1'
+  document.getElementById('template-modal').classList.add('open')
+}
+
+function openEditTemplate(id) {
+  const item = templateCache.find(row => row.id === id)
+  if (!item) return
+  document.getElementById('template-modal-title').textContent = '编辑模板'
+  document.getElementById('edit-template-id').value = id
+  document.getElementById('template-title').value = item.title || ''
+  document.getElementById('template-category').value = item.category || '通用'
+  document.getElementById('template-content').value = item.content || ''
+  document.getElementById('template-enabled').value = String(item.enabled ? 1 : 0)
+  document.getElementById('template-modal').classList.add('open')
+}
+
+async function saveTemplate() {
+  const id = document.getElementById('edit-template-id').value
+  const body = {
+    title: document.getElementById('template-title').value.trim(),
+    category: document.getElementById('template-category').value.trim() || '通用',
+    content: document.getElementById('template-content').value.trim(),
+    enabled: Number(document.getElementById('template-enabled').value),
+  }
+  if (!body.title || !body.content) {
+    toast('⚠ 模板标题和内容不能为空')
+    return
+  }
+  const result = id ? await req('/templates/' + id, 'PUT', body) : await req('/templates', 'POST', body)
+  if (!result.__error) {
+    toast(id ? '✅ 模板已更新' : '✅ 模板已创建')
+    closeModal('template-modal')
+    render()
+  }
+}
+
+async function deleteTemplate(id) {
+  if (!confirm('确认删除该模板吗？')) return
+  const result = await req('/templates/' + id, 'DELETE')
+  if (!result.__error) {
+    toast('已删除')
+    render()
+  }
+}
+
+async function renderSites(el) {
+  const data = await req('/sites')
+  if (data.__error) return
+  siteCache = data
+  el.innerHTML = `
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">🌐 监控网站管理</div>
+        <div class="panel-actions">
+          <button class="btn btn-gold btn-sm" onclick="openAddSite()">＋ 添加网站</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>状态</th>
+                <th>网站名称</th>
+                <th>来源类型</th>
+                <th>列表 URL</th>
+                <th>抓取时间</th>
+                <th>最近新增</th>
+                <th>上次抓取</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${data.length === 0
+                ? '<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🌐</div>暂无监控网站</div></td></tr>'
+                : data.map(site => {
+                  const st = (site.source_type || '').trim()
+                  const stHtml = st ? `<span class="badge" style="background:rgba(39,174,96,0.1);color:#1a7a3a;font-size:0.7rem">${escapeHtml(st)}</span>` : '<span class="muted">-</span>'
+                  return `<tr>
+                    <td><span class="status-dot ${site.enabled ? 'status-on' : 'status-off'}"></span>${site.enabled ? '启用' : '停用'}</td>
+                    <td><strong>${escapeHtml(site.name)}</strong> <span class="badge" style="font-size:0.65rem;background:${site.crawl_mode === 'auto' ? 'rgba(39,174,96,0.12);color:var(--success)' : 'rgba(201,168,76,0.16);color:#8a6a16'}">${site.crawl_mode === 'auto' ? '智能' : '手动'}</span></td>
+                    <td>${stHtml}</td>
+                    <td class="mono" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escapeHtml(site.url)}">${escapeHtml(site.url)}</td>
+                    <td class="mono">${String(site.cron_hour).padStart(2, '0')}:${String(site.cron_minute).padStart(2, '0')}</td>
+                    <td class="mono">${site.last_count || 0} 条</td>
+                    <td class="mono">${formatText((site.last_crawl || '').slice(0, 19))}</td>
+                    <td style="display:flex;gap:5px;flex-wrap:wrap">
+                      <button class="btn btn-outline btn-sm" onclick="manualCrawl(${site.id})">抓取</button>
+                      <button class="btn btn-ghost btn-sm" onclick="openEditSite(${site.id})">编辑</button>
+                      <button class="btn btn-${site.enabled ? 'ghost' : 'outline'} btn-sm" onclick="toggleSite(${site.id}, ${site.enabled ? 0 : 1})">${site.enabled ? '停用' : '启用'}</button>
+                      <button class="btn btn-danger btn-sm" onclick="delSite(${site.id})">删除</button>
+                    </td>
+                  </tr>`
+                }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>`
+}
+
+function resetSitePreview() {
+  const box = document.getElementById('site-preview-box')
+  if (!box) return
+  box.style.display = 'none'
+  box.innerHTML = ''
+}
+
+function setCrawlMode(mode) {
+  const isAuto = mode === 'auto'
+  document.getElementById('mode-auto-label').style.borderColor = isAuto ? 'var(--success)' : 'var(--border)'
+  document.getElementById('mode-manual-label').style.borderColor = isAuto ? 'var(--border)' : 'var(--gold)'
+  document.querySelector('input[name="crawl_mode"][value="auto"]').checked = isAuto
+  document.querySelector('input[name="crawl_mode"][value="manual"]').checked = !isAuto
+  document.getElementById('manual-selectors-area').style.display = isAuto ? 'none' : ''
+  document.getElementById('auto-mode-info').style.display = isAuto ? '' : 'none'
+  document.getElementById('preview-btn').style.display = isAuto ? 'none' : ''
+  document.getElementById('analyze-btn').style.display = isAuto ? '' : 'none'
+  resetSitePreview()
+}
+
+function getSiteFormBody() {
+  const mode = document.querySelector('input[name="crawl_mode"]:checked').value
+  return {
+    name: document.getElementById('site-name').value.trim(),
+    url: document.getElementById('site-url').value.trim(),
+    list_selector: document.getElementById('site-selector').value.trim(),
+    title_selector: document.getElementById('site-title-selector').value.trim(),
+    date_selector: document.getElementById('site-date-selector').value.trim(),
+    cron_hour: Number(document.getElementById('site-hour').value),
+    cron_minute: Number(document.getElementById('site-minute').value),
+    crawl_mode: mode,
+    source_type: document.getElementById('site-source-type').value.trim(),
+  }
+}
+
+async function analyzeSite() {
+  const body = getSiteFormBody()
+  if (!body.url) {
+    toast('⚠ 请先填写列表页 URL')
+    return
+  }
+  toast('🤖 正在智能分析网站结构...', 5000)
+  const result = await req('/sites/analyze', 'POST', body)
+  if (result.__error) return
+  const box = document.getElementById('site-preview-box')
+  box.style.display = 'block'
+  if (!result.success) {
+    box.innerHTML = `<div class="note-box"><strong>分析失败：</strong>${escapeHtml(result.message)}</div>`
+    return
+  }
+  const sel = result.suggested_selectors || {}
+  let selectorInfo = ''
+  if (sel.list_selector) {
+    selectorInfo = `
+      <div style="margin-top:8px;padding:8px;background:rgba(39,174,96,0.06);border-radius:2px;font-size:0.78rem">
+        <strong>自动检测结果：</strong><br/>
+        <span class="mono">列表容器: ${escapeHtml(sel.list_selector)}</span><br/>
+        ${sel.title_selector ? `<span class="mono">标题元素: ${escapeHtml(sel.title_selector)}</span><br/>` : ''}
+        ${sel.date_selector ? `<span class="mono">日期元素: ${escapeHtml(sel.date_selector)}</span>` : ''}
+      </div>`
+  }
+  box.innerHTML = `
+    <div><strong>🤖 智能检测完成：</strong>命中 ${result.matched_count} 个节点，提取 ${result.preview_count} 条公告</div>
+    ${selectorInfo}
+    ${result.samples.length === 0
+      ? '<div class="muted" style="margin-top:8px">未提取到有效公告，请确认 URL 是否为公告列表页。</div>'
+      : `<div class="preview-list" style="margin-top:8px">${result.samples.map(sample => `
+          <div class="preview-item">
+            <div><strong>${escapeHtml(sample.title || '-')}</strong></div>
+            <div class="muted">发布日期：${escapeHtml(sample.pub_date || '未识别')}</div>
+            <div class="muted">链接：${escapeHtml(sample.url || '-')}</div>
+          </div>`).join('')}</div>`}
+    <div class="muted" style="margin-top:8px">检测结果用于展示抓取效果，实际保存后系统将使用智能模式自动运行。</div>`
+}
+
+function openAddSite() {
+  document.getElementById('site-modal-title').textContent = '添加监控网站'
+  document.getElementById('edit-site-id').value = ''
+  document.getElementById('site-name').value = ''
+  document.getElementById('site-url').value = ''
+  document.getElementById('site-selector').value = '.list-item a, .notice-list a'
+  document.getElementById('site-title-selector').value = ''
+  document.getElementById('site-date-selector').value = ''
+  document.getElementById('site-hour').value = 8
+  document.getElementById('site-minute').value = 0
+  document.getElementById('site-source-type').value = ''
+  setCrawlMode('auto')  // 默认智能模式
+  resetSitePreview()
+  document.getElementById('site-modal').classList.add('open')
+}
+
+async function openEditSite(id) {
+  const site = siteCache.find(item => item.id === id)
+  if (!site) return
+  document.getElementById('site-modal-title').textContent = '编辑网站'
+  document.getElementById('edit-site-id').value = id
+  document.getElementById('site-name').value = site.name || ''
+  document.getElementById('site-url').value = site.url || ''
+  document.getElementById('site-selector').value = site.list_selector || ''
+  document.getElementById('site-title-selector').value = site.title_selector || ''
+  document.getElementById('site-date-selector').value = site.date_selector || ''
+  document.getElementById('site-hour').value = site.cron_hour
+  document.getElementById('site-minute').value = site.cron_minute
+  document.getElementById('site-source-type').value = site.source_type || ''
+  resetSitePreview()
+  setCrawlMode(site.crawl_mode === 'auto' ? 'auto' : 'manual')
+  document.getElementById('site-modal').classList.add('open')
+}
+
+async function previewSite() {
+  const body = getSiteFormBody()
+  if (!body.url) {
+    toast('⚠ 请先填写列表页 URL')
+    return
+  }
+  const result = await req('/sites/preview', 'POST', body)
+  if (result.__error) return
+  const box = document.getElementById('site-preview-box')
+  box.style.display = 'block'
+  box.innerHTML = `
+    <div><strong>校验结果：</strong>原始命中 ${result.matched_count} 个节点，过滤后可用 ${result.preview_count} 条样例。</div>
+    ${result.samples.length === 0
+      ? '<div class="muted">当前选择器没有拿到可用标题，请检查列表项/标题选择器是否正确。</div>'
+      : `<div class="preview-list">${result.samples.map(sample => `
+          <div class="preview-item">
+            <div><strong>${escapeHtml(sample.title || '-')}</strong></div>
+            <div class="muted">发布日期：${escapeHtml(sample.pub_date || '未识别')}</div>
+            <div class="muted">链接：${escapeHtml(sample.url || '-')}</div>
+          </div>`).join('')}</div>`}
+  `
+}
+
+async function saveSite() {
+  const id = document.getElementById('edit-site-id').value
+  const body = getSiteFormBody()
+  if (!body.name || !body.url) {
+    toast('⚠ 名称和 URL 不能为空')
+    return
+  }
+  const result = id ? await req('/sites/' + id, 'PUT', body) : await req('/sites', 'POST', body)
+  if (!result.__error) {
+    toast(id ? '✅ 更新成功' : '✅ 添加成功')
+    closeModal('site-modal')
+    render()
+  }
+}
+
+async function toggleSite(id, enabled) {
+  const result = await req('/sites/' + id, 'PUT', { enabled })
+  if (!result.__error) {
+    toast(enabled ? '✅ 已启用' : '⏸ 已停用')
+    render()
+  }
+}
+
+async function delSite(id) {
+  if (!confirm('确认删除？相关公告数据也会一起删除。')) return
+  const result = await req('/sites/' + id, 'DELETE')
+  if (!result.__error) {
+    toast('已删除')
+    render()
+  }
+}
+
+async function manualCrawl(id) {
+  const site = siteCache.find(item => item.id === id)
+  toast(`⚡ 正在抓取：${site ? site.name : '目标网站'}...`, 4000)
+  const result = await req('/sites/' + id + '/crawl', 'POST')
+  if (!result.__error) {
+    toast('✅ ' + result.message)
+    setTimeout(render, 1000)
+  }
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open')
+}
+
+async function renderKeywords(el) {
+  const data = await req('/keywords')
+  if (data.__error) return
+  el.innerHTML = `
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">🔍 关键词过滤</div></div>
+        <div class="panel-body">
+          <p style="font-size:0.83rem;color:var(--text2);line-height:1.9;margin-bottom:1rem">
+            添加关键词后，公告列表会<strong style="color:var(--text)">自动只显示</strong>标题中命中任一关键词的条目。<br/>
+            支持一次输入多个关键词，使用 <code style="background:var(--surface2);padding:2px 6px;border-radius:2px">,</code>、<code style="background:var(--surface2);padding:2px 6px;border-radius:2px">，</code>、<code style="background:var(--surface2);padding:2px 6px;border-radius:2px">、</code> 分隔。
+          </p>
+          <div style="display:flex;gap:0.8rem">
+            <input class="form-input" id="new-kw" placeholder="如：智能化、弱电、安防、信息化" style="flex:1" onkeydown="if(event.key==='Enter')addKw()"/>
+            <button class="btn btn-gold" onclick="addKw()">添加</button>
+          </div>
+          <div style="margin-top:1rem;display:flex;flex-wrap:wrap;gap:4px">
+            ${data.length === 0
+              ? '<span style="color:var(--text2);font-size:0.83rem">暂无关键词（显示全部）</span>'
+              : data.map(item => `<div class="kw-tag">${escapeHtml(item.word)}<button class="kw-remove" onclick="delKw(${item.id})">✕</button></div>`).join('')}
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">💡 使用说明</div></div>
+        <div class="panel-body" style="font-size:0.85rem;line-height:2.1;color:var(--text2)">
+          <p>① 在“网站管理”中先校验选择器，再保存站点</p>
+          <p>② 列表页、标题、日期选择器建议成组配置，避免发布日期为空</p>
+          <p>③ 默认显示全部公告，可按网站、状态、时间和关键词缩小范围</p>
+          <p>④ 打开公告列表不会自动清除 NEW，需显式标记已读</p>
+          <p>⑤ 后端服务运行后，可通过 <code style="background:var(--surface2);padding:2px 6px;border-radius:2px;font-size:0.78rem">GET /api/health</code> 检查部署状态</p>
+          <br/>
+          <p style="color:var(--gold)">⚠ 后端 Python 服务需保持运行</p>
+          <p><code style="background:var(--surface2);padding:2px 6px;border-radius:2px;font-size:0.78rem">python3 main.py</code></p>
+        </div>
+      </div>
+    </div>`
+}
+
+async function addKw() {
+  const input = document.getElementById('new-kw')
+  const words = splitKeywords(input.value)
+  if (!words.length) {
+    toast('⚠ 请输入关键词')
+    return
+  }
+
+  // 一次 POST 发送全部（后端 split_keywords 支持逗号/分号/换行分隔）
+  const result = await req('/keywords', 'POST', { word: words.join(',') }, true)
+  if (result.__error) {
+    toast('⚠ ' + result.message, 4000)
+  } else {
+    const msg = result.message || `已添加 ${result.inserted || words.length} 个关键词`
+    toast('✅ ' + msg, 4000)
+  }
+
+  input.value = ''
+  render()
+}
+
+async function delKw(id) {
+  const result = await req('/keywords/' + id, 'DELETE')
+  if (!result.__error) {
+    toast('已删除')
+    render()
+  }
+}
+
+async function renderScheduler(el) {
+  const [status, health] = await Promise.all([req('/scheduler/status'), req('/health')])
+  if (status.__error || health.__error) return
+  el.innerHTML = `
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">⏰ 定时任务状态</div>
+          <div style="color:${status.running ? 'var(--success)' : 'var(--red)'};font-size:0.8rem">${status.running ? '● 调度器运行中' : '● 已停止'}</div>
+        </div>
+        <div class="panel-body">
+          ${status.jobs.length === 0
+            ? '<div class="empty-state"><div class="empty-icon">⏸</div>暂无定时任务</div>'
+            : `<table>
+                <thead><tr><th>网站</th><th>任务 ID</th><th>下次执行时间</th></tr></thead>
+                <tbody>
+                  ${status.jobs.map(job => `
+                    <tr>
+                      <td><strong>${escapeHtml(job.site_name || '-')}</strong></td>
+                      <td class="mono">${escapeHtml(job.id)}</td>
+                      <td class="mono">${formatText(job.next_run)}</td>
+                    </tr>`).join('')}
+                </tbody>
+              </table>`}
+          <div style="margin-top:1.5rem"><button class="btn btn-gold" onclick="crawlAll()">⚡ 立即全量抓取</button></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">🩺 服务健康检查</div></div>
+        <div class="panel-body" style="font-size:0.84rem;line-height:2.1;color:var(--text2)">
+          <p><strong style="color:var(--text)">状态：</strong>${escapeHtml(health.status)}</p>
+          <p><strong style="color:var(--text)">数据库：</strong>${escapeHtml(health.database.path)}</p>
+          <p><strong style="color:var(--text)">启用站点：</strong>${health.sites.enabled} / ${health.sites.total}</p>
+          <p><strong style="color:var(--text)">调度任务数：</strong>${health.scheduler.job_count}</p>
+          <p><strong style="color:var(--text)">公告总数：</strong>${health.bids.total}</p>
+          <p><strong style="color:var(--text)">检查时间：</strong>${escapeHtml(health.time)}</p>
+        </div>
+      </div>
+    </div>`
+}
+
+async function renderStats(el) {
+  const data = await req('/stats/site-stats')
+  if (data.__error) return
+  if (data.length === 0) {
+    el.innerHTML = `<div class="panel"><div class="panel-header"><div class="panel-title">📊 抓取统计</div></div><div class="panel-body"><div class="empty-state"><div class="empty-icon">📊</div>暂无抓取记录（先执行一次抓取）</div></div></div>`
+    return
+  }
+  const rowsHtml = data.map(row => {
+    const rate = row.total_runs > 0 ? ((row.success_count / row.total_runs) * 100).toFixed(1) : '0.0'
+    return `<tr>
+      <td><strong>${escapeHtml(row.site_name || '-')}</strong></td>
+      <td class="mono">${row.total_runs}</td>
+      <td class="mono" style="color:var(--success)">${row.success_count}</td>
+      <td class="mono" style="color:${row.fail_count > 0 ? 'var(--red)' : 'inherit'}">${row.fail_count}</td>
+      <td class="mono">${row.total_new || 0}</td>
+      <td class="mono">${(row.avg_duration_ms || 0).toFixed(0)} ms</td>
+      <td class="mono">${formatText((row.last_run || '').slice(0, 19))}</td>
+    </tr>`
+  }).join('')
+  el.innerHTML = `
+    <div class="panel">
+      <div class="panel-header"><div class="panel-title">📊 各站点抓取统计</div></div>
+      <div class="panel-body">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>网站</th><th>总次数</th><th>成功</th><th>失败</th><th>总新增</th><th>平均耗时</th><th>最近抓取</th></tr></thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>
+        </div>
+        <div class="note-box" style="margin-top:1rem">统计基于历史抓取日志，可进入「告警记录」查看近期失败详情。</div>
+      </div>
+    </div>`
+}
+
+async function renderAlerts(el) {
+  const data = await req('/health/alerts')
+  if (data.__error) return
+  if (data.length === 0) {
+    el.innerHTML = `<div class="panel"><div class="panel-header"><div class="panel-title">🚨 抓取失败告警（最近7天）</div></div><div class="panel-body"><div class="empty-state"><div class="empty-icon">✅</div>近7天无抓取失败记录</div></div></div>`
+    return
+  }
+  const rowsHtml = data.map(row => `
+    <tr>
+      <td><strong>${escapeHtml(row.site_name || '-')}</strong></td>
+      <td><span class="mono">${formatText((row.crawl_time || '').slice(0, 19))}</span></td>
+      <td><span style="color:var(--red)">失败</span></td>
+      <td><span class="mono" style="color:var(--text2);font-size:0.78rem">${escapeHtml(row.error_message || '-')}</span></td>
+      <td><span class="mono">${(row.duration_ms || 0).toFixed(0)} ms</span></td>
+    </tr>`).join('')
+  el.innerHTML = `
+    <div class="panel">
+      <div class="panel-header"><div class="panel-title">🚨 抓取失败告警（最近7天）</div></div>
+      <div class="panel-body">
+        <div class="note-box" style="margin-bottom:1rem;border-left-color:var(--red)">以下记录为近7天内抓取失败的站点，请检查选择器配置或目标站点可用性。</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>网站</th><th>时间</th><th>状态</th><th>错误信息</th><th>耗时</th></tr></thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>`
+}
+
+// 启动：先认证再渲染
+;(async function init() {
+  const authed = await checkAuth()
+  if (authed) render()
+})()
+</script>
+</body>
+</html>
