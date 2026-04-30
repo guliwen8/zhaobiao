@@ -823,6 +823,7 @@ async function renderBids(el) {
           <button class="btn btn-outline btn-sm" onclick="exportBids()">📥 导出当前条件</button>
           <button class="btn ${keywordToggleClass} btn-sm" onclick="toggleAutoKeywords()" ${keywordToggleDisabled}>${keywordToggleText}</button>
           <button class="btn btn-outline btn-sm" onclick="crawlAll()">⚡ 立即全量抓取</button>
+          <button class="btn btn-danger btn-sm" onclick="clearAllBids()">🗑 清除数据记录</button>
         </div>
       </div>
       <div class="panel-body">
@@ -1101,6 +1102,15 @@ async function crawlAll() {
   if (!result.__error) {
     toast('⚡ 已触发全量抓取，请稍后刷新查看结果', 4000)
     setTimeout(render, 6000)
+  }
+}
+
+async function clearAllBids() {
+  if (!confirm('确定要清除全部招标数据记录吗？此操作不可恢复。')) return
+  const result = await req('/bids/clear', 'POST')
+  if (!result.__error) {
+    toast('已清除全部数据记录')
+    render()
   }
 }
 
