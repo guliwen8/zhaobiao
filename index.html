@@ -1588,7 +1588,7 @@ async function renderSites(el) {
                   const stHtml = st ? `<span class="badge" style="background:rgba(39,174,96,0.1);color:#1a7a3a;font-size:0.7rem">${escapeHtml(st)}</span>` : '<span class="muted">-</span>'
                   return `<tr>
                     <td><span class="status-dot ${site.enabled ? 'status-on' : 'status-off'}"></span>${site.enabled ? '启用' : '停用'}</td>
-                    <td><strong>${escapeHtml(site.name)}</strong> <span class="badge" style="font-size:0.65rem;background:${site.crawl_mode === 'auto' ? 'rgba(39,174,96,0.12);color:var(--success)' : 'rgba(201,168,76,0.16);color:#8a6a16'}">${site.crawl_mode === 'auto' ? '智能' : '手动'}</span></td>
+                    <td><strong>${escapeHtml(site.name)}</strong> ${site.locked ? '<span title="固定站点">🔒</span>' : ''} <span class="badge" style="font-size:0.65rem;background:${site.crawl_mode === 'auto' ? 'rgba(39,174,96,0.12);color:var(--success)' : 'rgba(201,168,76,0.16);color:#8a6a16'}">${site.crawl_mode === 'auto' ? '智能' : '手动'}</span></td>
                     <td>${stHtml}</td>
                     <td class="mono" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escapeHtml(site.url)}">${escapeHtml(site.url)}</td>
                     <td class="mono">${String(site.cron_hour).padStart(2, '0')}:${String(site.cron_minute).padStart(2, '0')}</td>
@@ -1598,7 +1598,7 @@ async function renderSites(el) {
                       <button class="btn btn-outline btn-sm" onclick="manualCrawl(${site.id})">抓取</button>
                       <button class="btn btn-ghost btn-sm" onclick="openEditSite(${site.id})">编辑</button>
                       <button class="btn btn-${site.enabled ? 'ghost' : 'outline'} btn-sm" onclick="toggleSite(${site.id}, ${site.enabled ? 0 : 1})">${site.enabled ? '停用' : '启用'}</button>
-                      <button class="btn btn-danger btn-sm" onclick="delSite(${site.id})">删除</button>
+                      ${site.locked ? '' : `<button class="btn btn-danger btn-sm" onclick="delSite(${site.id})">删除</button>`}
                     </td>
                   </tr>`
                 }).join('')}

@@ -357,6 +357,7 @@ def init_db():
             source_type TEXT DEFAULT '',
             last_crawl TEXT DEFAULT '',
             last_count INTEGER DEFAULT 0,
+            locked INTEGER DEFAULT 0,
             created_at TEXT DEFAULT (datetime('now','localtime'))
         );
         CREATE TABLE IF NOT EXISTS bids (
@@ -440,6 +441,12 @@ def init_db():
         );
         """
     )
+
+    # ── 迁移：为已有站点表增加锁定列 ──
+    try:
+        c.execute("ALTER TABLE sites ADD COLUMN locked INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass  # 列已存在
 
     # ── 系统配置 ──
     c.execute(
@@ -2111,7 +2118,9 @@ def update_site(site_id: int, body: SiteUpdate):
 
 @app.delete("/api/sites/{site_id}")
 def delete_site(site_id: int):
-    ensure_site_exists(site_id)
+    site = ensure_site_exists(site_id)
+    if site.get("locked"):
+        raise HTTPException(403, "固定站点不允许删除")
     conn = get_conn()
     conn.execute("DELETE FROM sites WHERE id = ?", (site_id,))
     conn.execute("DELETE FROM bids WHERE site_id = ?", (site_id,))
