@@ -455,6 +455,22 @@ def init_db():
     conn.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('match_mode', 'exact')")
     conn.commit()
 
+    # ── 预设固定站点 ──
+    SEED_SITES = [
+        (1, "广东省公共资源交易中心", "https://www.gdgpo.gov.cn/queryMoreInfoList.do?channelId=0752f8888169430b8b9acd8b85cfc208", ".list-item a, .notice-list a, td a", 0),
+        (2, "浙江政府采购网", "https://zfcg.czt.zj.gov.cn/topicData/list?topicCode=purchaseAnn", ".item-title a, .list a", 0),
+        (3, "全国公共资源交易平台", "https://deal.mlr.gov.cn/ggjg/index.jhtml", ".list-content a, .news-list a", 0),
+        (4, "绍兴市公共资源交易网官网", "https://ggb.sx.gov.cn/", 'a[href*="art_"]', 1),
+        (5, "柯桥区公共资源交易中心", "https://www.kq.gov.cn/col/col1229545463/index.html", 'a[href*="art_"]', 1),
+        (6, "绍兴市越城公共交易中心", "https://www.sxyc.gov.cn/col/col1559723/index.html", 'a[href*="art_"]', 1),
+    ]
+    for sid, name, url, selector, enabled in SEED_SITES:
+        conn.execute(
+            "INSERT OR IGNORE INTO sites (id, name, url, list_selector, enabled, locked) VALUES (?, ?, ?, ?, ?, 1)",
+            (sid, name, url, selector, enabled),
+        )
+    conn.commit()
+
     # ── 用户表 ──
     c.executescript(
         """
