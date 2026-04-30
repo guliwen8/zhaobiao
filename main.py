@@ -37,6 +37,8 @@ logger = logging.getLogger(__name__)
 DEFAULT_ALLOWED_ORIGINS = ["null"]
 LOCAL_ORIGIN_REGEX = r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$"
 CRAWL_TIMEOUT = 20
+CRAWL_PROXY = os.getenv("BID_MONITOR_PROXY", "").strip() or None  # 部署到远程服务器时设置代理
+CRAWL_VERIFY_SSL = os.getenv("BID_MONITOR_VERIFY_SSL", "").lower() not in {"0", "false", "no"}
 USE_ENV_PROXY = os.getenv("BID_MONITOR_USE_ENV_PROXY", "").lower() in {"1", "true", "yes", "on"}
 FALLBACK_TITLE_KEYWORDS = ["招标", "采购", "公告", "中标", "挂牌", "竞争性", "谈判"]
 PROJECT_STAGES = {"线索", "资格预审", "报名中", "标书编制", "已投标", "澄清答疑", "中标", "未中标", "放弃"}
@@ -124,15 +126,22 @@ async def auth_middleware(request: Request, call_next):
 DB_PATH = os.getenv("BID_MONITOR_DB_PATH", "bid_monitor.db")
 HEADERS = {
     "User-Agent": (
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
         "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     ),
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Accept-Language": "zh-CN,zh;q=0.9",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+    "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.5",
+    "Accept-Encoding": "gzip, deflate",
+    "Cache-Control": "max-age=0",
+    "Connection": "keep-alive",
+    "Upgrade-Insecure-Requests": "1",
 }
 scheduler = BackgroundScheduler(timezone="Asia/Shanghai")
 HTTP_SESSION = requests.Session()
 HTTP_SESSION.trust_env = USE_ENV_PROXY
+if CRAWL_PROXY:
+    HTTP_SESSION.proxies = {"http": CRAWL_PROXY, "https": CRAWL_PROXY}
+HTTP_SESSION.verify = CRAWL_VERIFY_SSL
 
 # ── Auth ──
 TOKEN_EXPIRE_DAYS = 30
@@ -1293,14 +1302,33 @@ def get_candidate_items(soup: BeautifulSoup, selector: str, site: Optional[dict[
     return items
 
 
+def _headers_for(url: str) -> dict:
+    """为特定 URL 构造请求头，带 Referer 模拟来源"""
+    h = dict(HEADERS)
+    parsed = urlparse(url)
+    h["Referer"] = f"{parsed.scheme}://{parsed.netloc}/"
+    return h
+
+
 def fetch_soup(url: str) -> BeautifulSoup:
     try:
-        response = HTTP_SESSION.get(url, headers=HEADERS, timeout=CRAWL_TIMEOUT)
+        response = HTTP_SESSION.get(url, headers=_headers_for(url), timeout=CRAWL_TIMEOUT)
+        if response.status_code != 200:
+            raise BidMonitorError(502, f"网站返回 {response.status_code}，可能被反爬或需代理访问。提示: 设置 BID_MONITOR_PROXY 环境变量")
         response.raise_for_status()
         response.encoding = response.apparent_encoding
+    except requests.ConnectionError as exc:
+        logger.error("无法连接: %s", url, exc_info=exc)
+        raise BidMonitorError(502, f"网络不通，无法访问目标网站。远程部署时可能需要设置代理 BID_MONITOR_PROXY") from exc
+    except requests.Timeout as exc:
+        logger.error("请求超时: %s", url, exc_info=exc)
+        raise BidMonitorError(502, f"请求超时 ({CRAWL_TIMEOUT}s)，网站响应过慢或网络不通") from exc
     except requests.RequestException as exc:
         logger.error("请求失败: %s", url, exc_info=exc)
-        raise BidMonitorError(502, f"抓取失败，无法访问目标网站: {url}") from exc
+        status = getattr(exc.response, "status_code", "?") if hasattr(exc, "response") and exc.response is not None else "?"
+        if str(status) in ("403", "429", "503"):
+            raise BidMonitorError(502, f"网站拒绝访问(HTTP {status})，触发了反爬机制。建议: 1) 设置代理 BID_MONITOR_PROXY 2) 降低抓取频率") from exc
+        raise BidMonitorError(502, f"抓取失败(HTTP {status}): {str(exc)[:200]}") from exc
     try:
         return BeautifulSoup(response.text, "lxml")
     except Exception as exc:
@@ -1917,7 +1945,39 @@ def health_check():
         "scheduler": {"running": scheduler.running, "job_count": len(scheduler.get_jobs())},
         "sites": {"total": total_sites, "enabled": enabled_sites},
         "bids": {"total": total_bids},
+        "crawl_config": {
+            "proxy": CRAWL_PROXY or "(未设置 — 远程部署建议配置)",
+            "verify_ssl": CRAWL_VERIFY_SSL,
+            "timeout": CRAWL_TIMEOUT,
+        },
     }
+
+
+@app.get("/api/diagnose")
+def diagnose_sites():
+    """诊断已启用站点的网络连通性，帮助排查远程部署问题"""
+    conn = get_conn()
+    sites = [dict(r) for r in conn.execute("SELECT id, name, url FROM sites WHERE enabled = 1").fetchall()]
+    conn.close()
+    results = []
+    for site in sites:
+        result = {"id": site["id"], "name": site["name"], "url": site["url"], "ok": False, "status": "?", "duration_ms": 0, "body_bytes": 0, "error": ""}
+        try:
+            import time
+            t0 = time.time()
+            resp = HTTP_SESSION.get(site["url"], headers=_headers_for(site["url"]), timeout=10)
+            duration_ms = int((time.time() - t0) * 1000)
+            result["duration_ms"] = duration_ms
+            result["status"] = resp.status_code
+            result["body_bytes"] = len(resp.content)
+            if resp.status_code == 200 and len(resp.content) > 200:
+                result["ok"] = True
+            else:
+                result["error"] = f"状态码 {resp.status_code}，响应体 {len(resp.content)} 字节，可能是反爬或重定向"
+        except Exception as e:
+            result["error"] = str(e)[:200]
+        results.append(result)
+    return {"results": results}
 
 
 @app.get("/api/stats")
