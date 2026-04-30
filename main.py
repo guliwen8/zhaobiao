@@ -432,6 +432,13 @@ def init_db():
         """
     )
 
+    # ── 系统配置 ──
+    c.execute(
+        "CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)"
+    )
+    conn.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('match_mode', 'exact')")
+    conn.commit()
+
     # ── 用户表 ──
     c.executescript(
         """
@@ -1352,19 +1359,11 @@ def update_site_crawl_status(site_id: int, new_count: int):
 
 def crawl_site(site: dict[str, Any], raise_on_error: bool = False, retry_times: int = 3) -> dict[str, Any]:
     """
-    抓取单个站点，按关键词过滤入库。
+    抓取单个站点，全量入库（关键词过滤在展示层完成）。
     返回 dict: {success, new_count, total_count, error_message, duration_ms, filtered_count}
     """
     start_time = datetime.now()
     last_error = ""
-
-    # 加载关键词列表（用于爬取过滤）
-    try:
-        kw_conn = get_conn()
-        keywords = [row["word"] for row in kw_conn.execute("SELECT word FROM keywords ORDER BY id").fetchall()]
-        kw_conn.close()
-    except Exception:
-        keywords = []
 
     for attempt in range(1, retry_times + 1):
         logger.info("开始抓取 [%s] 第 %d 次尝试: %s - %s", site["name"], attempt, site["name"], site["url"])
@@ -1373,14 +1372,9 @@ def crawl_site(site: dict[str, Any], raise_on_error: bool = False, retry_times: 
             conn = get_conn()
             cursor = conn.cursor()
             new_count = 0
-            filtered_count = 0
             try:
                 for entry in entries:
                     title = entry.get("title", "") or ""
-                    # 有关键词时只存储标题命中关键词的公告
-                    if keywords and not any(kw in title for kw in keywords):
-                        filtered_count += 1
-                        continue
                     source_type = site.get("source_type", "") or ""
                     cursor.execute(
                         """
@@ -1404,10 +1398,9 @@ def crawl_site(site: dict[str, Any], raise_on_error: bool = False, retry_times: 
                 conn.close()
 
             duration_ms = int((datetime.now() - start_time).total_seconds() * 1000)
-            filter_info = f"，关键词过滤 {filtered_count} 条" if keywords and filtered_count else ""
-            _log_crawl(site, success=True, new_count=new_count, total_count=total_raw, error_message=filter_info.strip(", "), duration_ms=duration_ms)
-            logger.info("完成抓取 %s：页面 %d 条%s，新增 %d 条，耗时 %dms", site["name"], total_raw, filter_info, new_count, duration_ms)
-            return {"success": True, "new_count": new_count, "total_count": total_raw, "error_message": "", "duration_ms": duration_ms, "filtered_count": filtered_count}
+            _log_crawl(site, success=True, new_count=new_count, total_count=total_raw, error_message="", duration_ms=duration_ms)
+            logger.info("完成抓取 %s：页面 %d 条，新增 %d 条，耗时 %dms", site["name"], total_raw, new_count, duration_ms)
+            return {"success": True, "new_count": new_count, "total_count": total_raw, "error_message": "", "duration_ms": duration_ms, "filtered_count": 0}
 
         except BidMonitorError as exc:
             last_error = exc.detail
