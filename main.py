@@ -2143,6 +2143,17 @@ def delete_bid(bid_id: int):
     return {"message": "删除成功"}
 
 
+@app.post("/api/bids/clear")
+def clear_all_bids():
+    conn = get_conn()
+    deleted = conn.execute("SELECT COUNT(*) FROM bids").fetchone()[0]
+    conn.execute("DELETE FROM bids")
+    conn.execute("DELETE FROM crawl_logs")
+    conn.commit()
+    conn.close()
+    return {"message": f"已清除 {deleted} 条招标记录"}
+
+
 @app.get("/api/bids/export")
 def export_bids(
     site_id: Optional[int] = None,
