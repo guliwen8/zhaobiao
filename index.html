@@ -1781,36 +1781,36 @@ async function renderKeywords(el) {
   const data = await req('/keywords')
   if (data.__error) return
   el.innerHTML = `
-    <div class=”two-col”>
-      <div class=”panel”>
-        <div class=”panel-header”><div class=”panel-title”>🔍 关键词过滤</div></div>
-        <div class=”panel-body”>
-          <p style=”font-size:0.83rem;color:var(--text2);line-height:1.9;margin-bottom:1rem”>
-            关键词用于<strong style=”color:var(--text)”>公告列表显示过滤</strong>，不影响爬虫全量抓取。<br/>
-            支持一次输入多个关键词，使用 <code style=”background:var(--surface2);padding:2px 6px;border-radius:2px”>,</code>、<code style=”background:var(--surface2);padding:2px 6px;border-radius:2px”>，</code>、<code style=”background:var(--surface2);padding:2px 6px;border-radius:2px”>、</code> 分隔。
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">🔍 关键词过滤</div></div>
+        <div class="panel-body">
+          <p style="font-size:0.83rem;color:var(--text2);line-height:1.9;margin-bottom:1rem">
+            添加关键词后，公告列表会<strong style="color:var(--text)">自动只显示</strong>标题中命中任一关键词的条目。<br/>
+            支持一次输入多个关键词，使用 <code style="background:var(--surface2);padding:2px 6px;border-radius:2px">,</code>、<code style="background:var(--surface2);padding:2px 6px;border-radius:2px">，</code>、<code style="background:var(--surface2);padding:2px 6px;border-radius:2px">、</code> 分隔。
           </p>
-          <div style=”display:flex;gap:0.8rem”>
-            <input class=”form-input” id=”new-kw” placeholder=”如：智能化、弱电、安防、信息化” style=”flex:1” onkeydown=”if(event.key==='Enter')addKw()”/>
-            <button class=”btn btn-gold” onclick=”addKw()”>添加</button>
+          <div style="display:flex;gap:0.8rem">
+            <input class="form-input" id="new-kw" placeholder="如：智能化、弱电、安防、信息化" style="flex:1" onkeydown="if(event.key==='Enter')addKw()"/>
+            <button class="btn btn-gold" onclick="addKw()">添加</button>
           </div>
-          <div style=”margin-top:1rem;display:flex;flex-wrap:wrap;gap:4px”>
+          <div style="margin-top:1rem;display:flex;flex-wrap:wrap;gap:4px">
             ${data.length === 0
-              ? '<span style=”color:var(--text2);font-size:0.83rem”>暂无关键词（显示全部）</span>'
-              : data.map(item => `<div class=”kw-tag”>${escapeHtml(item.word)}<button class=”kw-remove” onclick=”delKw(${item.id})”>✕</button></div>`).join('')}
+              ? '<span style="color:var(--text2);font-size:0.83rem">暂无关键词（显示全部）</span>'
+              : data.map(item => `<div class="kw-tag">${escapeHtml(item.word)}<button class="kw-remove" onclick="delKw(${item.id})">✕</button></div>`).join('')}
           </div>
         </div>
       </div>
-      <div class=”panel”>
-        <div class=”panel-header”><div class=”panel-title”>💡 使用说明</div></div>
-        <div class=”panel-body” style=”font-size:0.85rem;line-height:2.1;color:var(--text2)”>
-          <p>① 关键词仅影响公告列表的<strong>展示过滤</strong>，不影响爬虫入库</p>
-          <p>② 清空关键词即可看到全部已抓取的公告</p>
-          <p>③ 在”网站管理”中先校验选择器，再保存站点</p>
-          <p>④ 列表页、标题、日期选择器建议成组配置，避免发布日期为空</p>
-          <p>⑤ 打开公告列表不会自动清除 NEW，需显式标记已读</p>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">💡 使用说明</div></div>
+        <div class="panel-body" style="font-size:0.85rem;line-height:2.1;color:var(--text2)">
+          <p>① 在“网站管理”中先校验选择器，再保存站点</p>
+          <p>② 列表页、标题、日期选择器建议成组配置，避免发布日期为空</p>
+          <p>③ 默认显示全部公告，可按网站、状态、时间和关键词缩小范围</p>
+          <p>④ 打开公告列表不会自动清除 NEW，需显式标记已读</p>
+          <p>⑤ 后端服务运行后，可通过 <code style="background:var(--surface2);padding:2px 6px;border-radius:2px;font-size:0.78rem">GET /api/health</code> 检查部署状态</p>
           <br/>
-          <p style=”color:var(--gold)”>⚠ 后端 Python 服务需保持运行</p>
-          <p><code style=”background:var(--surface2);padding:2px 6px;border-radius:2px;font-size:0.78rem”>python3 main.py</code></p>
+          <p style="color:var(--gold)">⚠ 后端 Python 服务需保持运行</p>
+          <p><code style="background:var(--surface2);padding:2px 6px;border-radius:2px;font-size:0.78rem">python3 main.py</code></p>
         </div>
       </div>
     </div>`
