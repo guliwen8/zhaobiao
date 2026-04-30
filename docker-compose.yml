@@ -1,0 +1,12 @@
+version: "3.8"
+services:
+  tender:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./bid_monitor.db:/app/bid_monitor.db
+    restart: unless-stopped
+    environment:
+      - BID_MONITOR_PROXY=${BID_MONITOR_PROXY:-}
+      - BID_MONITOR_VERIFY_SSL=${BID_MONITOR_VERIFY_SSL:-true}
